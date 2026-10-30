@@ -196,10 +196,24 @@
       opacity: 0; transform: scale(.6); transition: .15s;
     }
     .song-title {
+      flex: 1 1 auto; min-width: 0;
       font-size: 17px; font-weight: 500;
       line-height: 1.35;
       overflow-wrap: anywhere;
       transition: color .15s;
+    }
+    .dam {
+      flex: none;
+      font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+      font-size: 14px; font-weight: 600; letter-spacing: .02em;
+      font-variant-numeric: tabular-nums;
+      padding: 3px 8px; border-radius: 8px;
+      background: var(--accent-soft); color: var(--accent);
+      white-space: nowrap;
+    }
+    .dam.none {
+      background: var(--surface-2); color: var(--text-3);
+      font-family: inherit; font-weight: 500; font-size: 12px;
     }
     .song.done .box { background: var(--done); border-color: var(--done); }
     .song.done .box svg { opacity: 1; transform: scale(1); }
@@ -207,6 +221,7 @@
       color: var(--text-3);
       text-decoration: line-through; text-decoration-thickness: 1.5px;
     }
+    .song.done .dam { opacity: .55; }
 
     mark {
       background: var(--accent-soft); color: var(--accent);
@@ -277,7 +292,7 @@
 
     function progress(artist) {
       const entry = SONGS.find(e => e.artist === artist);
-      const done = entry.songs.filter(s => sung[keyOf(artist, s)]).length;
+      const done = entry.songs.filter(s => sung[keyOf(artist, s.title)]).length;
       return { done, total: entry.songs.length };
     }
 
@@ -285,7 +300,7 @@
       let done = 0, total = 0;
       for (const e of SONGS) {
         total += e.songs.length;
-        done += e.songs.filter(s => sung[keyOf(e.artist, s)]).length;
+        done += e.songs.filter(s => sung[keyOf(e.artist, s.title)]).length;
       }
       totalEl.innerHTML = '<b>' + done + '</b> / ' + total + '곡';
       totalBarEl.style.width = total ? (done / total * 100) + '%' : '0%';
@@ -306,7 +321,7 @@
       for (const entry of SONGS) {
         const artistHit = entry.artist.toLowerCase().includes(q);
         const songs = q && !artistHit
-          ? entry.songs.filter(s => s.toLowerCase().includes(q))
+          ? entry.songs.filter(s => s.title.toLowerCase().includes(q) || (s.dam || '').includes(q))
           : entry.songs;
         if (songs.length === 0 && !(artistHit && q)) continue;
         groups.push({ artist: entry.artist, songs });
@@ -336,13 +351,17 @@
           <div class="bar"><i style="width:${pct}%"></i></div>
           <ul>
             ${g.songs.map(s => {
-              const isDone = !!sung[keyOf(g.artist, s)];
+              const isDone = !!sung[keyOf(g.artist, s.title)];
+              const dam = s.dam
+                ? `<span class="dam">${highlight(s.dam, q)}</span>`
+                : '<span class="dam none">DAM 없음</span>';
               return `<li>
                 <label class="song ${isDone ? 'done' : ''}">
                   <input type="checkbox" data-artist="${escapeHtml(g.artist)}"
-                         data-title="${escapeHtml(s)}" ${isDone ? 'checked' : ''}>
+                         data-title="${escapeHtml(s.title)}" ${isDone ? 'checked' : ''}>
                   <span class="box">${CHECK}</span>
-                  <span class="song-title ja">${highlight(s, q)}</span>
+                  <span class="song-title ja">${highlight(s.title, q)}</span>
+                  ${dam}
                 </label>
               </li>`;
             }).join('')}
