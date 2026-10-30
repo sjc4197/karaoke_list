@@ -59,4 +59,48 @@ const SONGS = [
       "宵祭り",
     ],
   },
+  {
+    artist: "indigo la End (인디고 라 엔드)",
+    songs: [
+      "心変わり",
+    ],
+  },
+  {
+    artist: "Kanaria (카나리아)",
+    songs: [
+      "BRAIN",
+    ],
+  },
+  {
+    artist: "r-906",
+    songs: [
+      "ワンダー",
+    ],
+  },
+  {
+    artist: "Saucy Dog (사우시 독)",
+    songs: [
+      "魔法にかけられて",
+    ],
+  },
+  {
+    artist: "なとり (나토리)",
+    songs: [
+      "フライデー・ナイト",
+    ],
+  },
+  {
+    artist: "藤井風 (후지이 카제)",
+    songs: [
+      "It's Alright",
+    ],
+  },
+  {
+    artist: "ずっと真夜中でいいのに。 (즛토마요)",
+    songs: [
+      "サターン",
+      "君がいて水になる",
+      "Dear Mr「F」",
+    ],
+  },
 ];
