@@ -2,86 +2,234 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111318">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
   <title>노래방 리스트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #111318;
-      --card: #1b1e26;
-      --line: #2a2e38;
-      --text: #f2f3f5;
-      --muted: #9aa0ad;
-      --accent: #ff5c8a;
-      --done: #4cd37a;
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --surface-2: #f0efeb;
+      --line: #e4e2dc;
+      --text: #1c1b19;
+      --text-2: #6b6964;
+      --text-3: #a09d96;
+      --accent: #e8457a;
+      --accent-soft: #fde6ee;
+      --done: #2fb47c;
+      --done-soft: #e1f5ec;
+      --shadow: 0 1px 2px rgba(20, 18, 12, .05), 0 6px 20px rgba(20, 18, 12, .06);
+      --radius: 18px;
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1117;
+        --surface: #181b23;
+        --surface-2: #20242e;
+        --line: #2a2e3a;
+        --text: #f1f2f5;
+        --text-2: #a4a8b4;
+        --text-3: #6c7080;
+        --accent: #ff5f90;
+        --accent-soft: #3a1f2b;
+        --done: #45d492;
+        --done-soft: #16352a;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+      }
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { background: var(--bg); }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Noto Sans KR", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
-      font-size: 17px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Noto Sans KR", "Noto Sans JP", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font-size: 16px;
       line-height: 1.5;
       -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
     }
+    .ja { font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Noto Sans KR", sans-serif; }
+
+    /* ---------- header ---------- */
     header {
       position: sticky; top: 0; z-index: 10;
-      background: var(--bg);
-      padding: 12px 16px 10px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--line);
+      padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
     }
-    h1 { font-size: 20px; margin: 0 0 10px; }
+    .header-inner { max-width: 640px; margin: 0 auto; }
+    .title-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .total {
+      font-size: 13px; font-weight: 500; color: var(--text-2);
+      white-space: nowrap;
+    }
+    .total b { color: var(--done); font-weight: 700; }
+    .total-bar {
+      height: 4px; border-radius: 99px; background: var(--line);
+      overflow: hidden; margin-bottom: 12px;
+    }
+    .total-bar > i {
+      display: block; height: 100%; width: 0;
+      background: var(--done); border-radius: 99px;
+      transition: width .35s ease;
+    }
+    .search { position: relative; }
+    .search svg {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 18px; height: 18px; color: var(--text-3); pointer-events: none;
+    }
     #search {
       width: 100%;
-      font-size: 17px;
-      padding: 10px 12px;
-      border-radius: 10px;
+      font: inherit; font-size: 16px;
+      padding: 12px 14px 12px 42px;
+      border-radius: 14px;
       border: 1px solid var(--line);
-      background: var(--card);
+      background: var(--surface);
       color: var(--text);
       outline: none;
+      box-shadow: var(--shadow);
+      transition: border-color .15s, box-shadow .15s;
+      -webkit-appearance: none;
     }
-    #search:focus { border-color: var(--accent); }
-    main { padding: 12px 16px 48px; max-width: 720px; margin: 0 auto; }
+    #search::placeholder { color: var(--text-3); }
+    #search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    /* ---------- list ---------- */
+    main {
+      max-width: 640px; margin: 0 auto;
+      padding: 16px 16px calc(56px + env(safe-area-inset-bottom));
+    }
     .artist {
-      background: var(--card);
+      background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       margin-bottom: 12px;
       overflow: hidden;
     }
     .artist summary {
       list-style: none;
       cursor: pointer;
-      padding: 12px 14px;
-      font-weight: 700;
-      font-size: 18px;
-      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px 12px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      grid-template-rows: auto auto;
+      column-gap: 12px;
+      align-items: center;
+      user-select: none;
     }
     .artist summary::-webkit-details-marker { display: none; }
-    .count { color: var(--muted); font-weight: 400; font-size: 14px; white-space: nowrap; }
-    .artist ol { margin: 0; padding: 0 14px 10px 14px; list-style: none; }
-    .artist li { border-top: 1px solid var(--line); }
-    .artist label {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 0;
+    .artist summary:active { background: var(--surface-2); }
+    .name {
+      grid-column: 1; grid-row: 1;
+      font-size: 19px; font-weight: 700; line-height: 1.3;
+      letter-spacing: -.01em;
+      overflow-wrap: anywhere;
+    }
+    .name-sub {
+      grid-column: 1; grid-row: 2;
+      font-size: 13px; color: var(--text-2); margin-top: 2px;
+    }
+    .pill {
+      grid-column: 2; grid-row: 1 / span 2;
+      font-size: 13px; font-weight: 700;
+      padding: 4px 10px; border-radius: 99px;
+      background: var(--surface-2); color: var(--text-2);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .pill.all { background: var(--done-soft); color: var(--done); }
+    .chev {
+      grid-column: 3; grid-row: 1 / span 2;
+      width: 20px; height: 20px; color: var(--text-3);
+      transition: transform .2s ease;
+    }
+    details[open] .chev { transform: rotate(180deg); }
+    .bar { height: 3px; background: var(--line); }
+    .bar > i {
+      display: block; height: 100%; width: 0;
+      background: var(--done);
+      transition: width .3s ease;
+    }
+
+    .artist ul { list-style: none; margin: 0; padding: 4px 8px 8px; }
+    .song {
+      position: relative;
+      display: flex; align-items: center; gap: 14px;
+      min-height: 52px;
+      padding: 8px 10px;
+      border-radius: 12px;
       cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      transition: background .12s;
     }
-    .artist input[type="checkbox"] {
+    .song:active { background: var(--surface-2); }
+    .song input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .box {
       flex: none;
-      width: 22px; height: 22px; margin: 0;
-      accent-color: var(--done);
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--text-3);
+      display: grid; place-items: center;
+      transition: background .15s, border-color .15s;
     }
-    .artist li.done .title { color: var(--muted); text-decoration: line-through; }
-    .empty { color: var(--muted); text-align: center; padding: 40px 0; }
-    mark { background: var(--accent); color: #fff; border-radius: 3px; padding: 0 2px; }
+    .box svg {
+      width: 14px; height: 14px; color: #fff;
+      opacity: 0; transform: scale(.6); transition: .15s;
+    }
+    .song-title {
+      font-size: 17px; font-weight: 500;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      transition: color .15s;
+    }
+    .song.done .box { background: var(--done); border-color: var(--done); }
+    .song.done .box svg { opacity: 1; transform: scale(1); }
+    .song.done .song-title {
+      color: var(--text-3);
+      text-decoration: line-through; text-decoration-thickness: 1.5px;
+    }
+
+    mark {
+      background: var(--accent-soft); color: var(--accent);
+      border-radius: 4px; padding: 0 2px;
+    }
+    .empty {
+      color: var(--text-3); text-align: center; padding: 64px 0; font-size: 15px;
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>노래방 리스트</h1>
-    <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off">
+    <div class="header-inner">
+      <div class="title-row">
+        <h1>노래방 리스트</h1>
+        <div class="total" id="total"></div>
+      </div>
+      <div class="total-bar"><i id="total-bar"></i></div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off" enterkeyhint="search">
+      </div>
+    </div>
   </header>
   <main id="list"></main>
 
@@ -89,7 +237,12 @@
   <script>
     const listEl = document.getElementById('list');
     const searchEl = document.getElementById('search');
+    const totalEl = document.getElementById('total');
+    const totalBarEl = document.getElementById('total-bar');
     const STORAGE_KEY = 'karaoke-sung';
+
+    const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+    const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
     function loadSung() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -116,10 +269,34 @@
         escapeHtml(text.slice(idx + q.length));
     }
 
-    function countText(artist) {
+    // "米津玄師 (요네즈 켄시)" -> { main: "米津玄師", sub: "요네즈 켄시" }
+    function splitName(artist) {
+      const m = artist.match(/^(.*?)\s*\((.*)\)\s*$/);
+      return m ? { main: m[1], sub: m[2] } : { main: artist, sub: '' };
+    }
+
+    function progress(artist) {
       const entry = SONGS.find(e => e.artist === artist);
       const done = entry.songs.filter(s => sung[keyOf(artist, s)]).length;
-      return done + ' / ' + entry.songs.length + '곡';
+      return { done, total: entry.songs.length };
+    }
+
+    function updateTotal() {
+      let done = 0, total = 0;
+      for (const e of SONGS) {
+        total += e.songs.length;
+        done += e.songs.filter(s => sung[keyOf(e.artist, s)]).length;
+      }
+      totalEl.innerHTML = '<b>' + done + '</b> / ' + total + '곡';
+      totalBarEl.style.width = total ? (done / total * 100) + '%' : '0%';
+    }
+
+    function updateCard(details) {
+      const { done, total } = progress(details.dataset.artist);
+      const pill = details.querySelector('.pill');
+      pill.textContent = done + ' / ' + total;
+      pill.classList.toggle('all', done === total && total > 0);
+      details.querySelector('.bar > i').style.width = (done / total * 100) + '%';
     }
 
     function render() {
@@ -144,41 +321,50 @@
         return;
       }
 
-      listEl.innerHTML = groups.map(g => `
+      listEl.innerHTML = groups.map(g => {
+        const { main, sub } = splitName(g.artist);
+        const { done, total } = progress(g.artist);
+        const pct = done / total * 100;
+        return `
         <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
           <summary>
-            <span>${highlight(g.artist, q)}</span>
-            <span class="count">${countText(g.artist)}</span>
+            <div class="name ja">${highlight(main, q)}</div>
+            ${sub ? `<div class="name-sub">${highlight(sub, q)}</div>` : ''}
+            <span class="pill ${done === total ? 'all' : ''}">${done} / ${total}</span>
+            ${CHEVRON}
           </summary>
-          <ol>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <ul>
             ${g.songs.map(s => {
-              const done = !!sung[keyOf(g.artist, s)];
-              return `<li class="${done ? 'done' : ''}">
-                <label>
+              const isDone = !!sung[keyOf(g.artist, s)];
+              return `<li>
+                <label class="song ${isDone ? 'done' : ''}">
                   <input type="checkbox" data-artist="${escapeHtml(g.artist)}"
-                         data-title="${escapeHtml(s)}" ${done ? 'checked' : ''}>
-                  <span class="title">${highlight(s, q)}</span>
+                         data-title="${escapeHtml(s)}" ${isDone ? 'checked' : ''}>
+                  <span class="box">${CHECK}</span>
+                  <span class="song-title ja">${highlight(s, q)}</span>
                 </label>
               </li>`;
             }).join('')}
-          </ol>
-        </details>
-      `).join('');
+          </ul>
+        </details>`;
+      }).join('');
     }
 
     listEl.addEventListener('change', e => {
       const cb = e.target;
       if (cb.type !== 'checkbox') return;
-      const artist = cb.dataset.artist;
-      const key = keyOf(artist, cb.dataset.title);
+      const key = keyOf(cb.dataset.artist, cb.dataset.title);
       if (cb.checked) sung[key] = true; else delete sung[key];
       saveSung(sung);
-      cb.closest('li').classList.toggle('done', cb.checked);
-      cb.closest('details').querySelector('.count').textContent = countText(artist);
+      cb.closest('.song').classList.toggle('done', cb.checked);
+      updateCard(cb.closest('details'));
+      updateTotal();
     });
 
     searchEl.addEventListener('input', render);
     render();
+    updateTotal();
   </script>
 </body>
 </html>
