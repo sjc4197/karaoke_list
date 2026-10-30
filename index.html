@@ -13,6 +13,7 @@
       --text: #f2f3f5;
       --muted: #9aa0ad;
       --accent: #ff5c8a;
+      --done: #4cd37a;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; background: var(--bg); color: var(--text); }
@@ -58,12 +59,21 @@
       display: flex; justify-content: space-between; align-items: center;
     }
     .artist summary::-webkit-details-marker { display: none; }
-    .count { color: var(--muted); font-weight: 400; font-size: 14px; }
+    .count { color: var(--muted); font-weight: 400; font-size: 14px; white-space: nowrap; }
     .artist ol { margin: 0; padding: 0 14px 10px 14px; list-style: none; }
-    .artist li {
-      padding: 10px 0;
-      border-top: 1px solid var(--line);
+    .artist li { border-top: 1px solid var(--line); }
+    .artist label {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .artist input[type="checkbox"] {
+      flex: none;
+      width: 22px; height: 22px; margin: 0;
+      accent-color: var(--done);
+    }
+    .artist li.done .title { color: var(--muted); text-decoration: line-through; }
     .empty { color: var(--muted); text-align: center; padding: 40px 0; }
     mark { background: var(--accent); color: #fff; border-radius: 3px; padding: 0 2px; }
   </style>
@@ -79,6 +89,17 @@
   <script>
     const listEl = document.getElementById('list');
     const searchEl = document.getElementById('search');
+    const STORAGE_KEY = 'karaoke-sung';
+
+    function loadSung() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch (e) { return {}; }
+    }
+    function saveSung(sung) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sung)); } catch (e) {}
+    }
+    let sung = loadSung();
+    const keyOf = (artist, title) => artist + '\u0000' + title;
 
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, c => ({
@@ -93,6 +114,12 @@
       return escapeHtml(text.slice(0, idx)) +
         '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' +
         escapeHtml(text.slice(idx + q.length));
+    }
+
+    function countText(artist) {
+      const entry = SONGS.find(e => e.artist === artist);
+      const done = entry.songs.filter(s => sung[keyOf(artist, s)]).length;
+      return done + ' / ' + entry.songs.length + '곡';
     }
 
     function render() {
@@ -118,17 +145,37 @@
       }
 
       listEl.innerHTML = groups.map(g => `
-        <details class="artist" ${q ? 'open' : ''}>
+        <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
           <summary>
             <span>${highlight(g.artist, q)}</span>
-            <span class="count">${g.songs.length}곡</span>
+            <span class="count">${countText(g.artist)}</span>
           </summary>
           <ol>
-            ${g.songs.map(s => `<li>${highlight(s, q)}</li>`).join('')}
+            ${g.songs.map(s => {
+              const done = !!sung[keyOf(g.artist, s)];
+              return `<li class="${done ? 'done' : ''}">
+                <label>
+                  <input type="checkbox" data-artist="${escapeHtml(g.artist)}"
+                         data-title="${escapeHtml(s)}" ${done ? 'checked' : ''}>
+                  <span class="title">${highlight(s, q)}</span>
+                </label>
+              </li>`;
+            }).join('')}
           </ol>
         </details>
       `).join('');
     }
+
+    listEl.addEventListener('change', e => {
+      const cb = e.target;
+      if (cb.type !== 'checkbox') return;
+      const artist = cb.dataset.artist;
+      const key = keyOf(artist, cb.dataset.title);
+      if (cb.checked) sung[key] = true; else delete sung[key];
+      saveSung(sung);
+      cb.closest('li').classList.toggle('done', cb.checked);
+      cb.closest('details').querySelector('.count').textContent = countText(artist);
+    });
 
     searchEl.addEventListener('input', render);
     render();
