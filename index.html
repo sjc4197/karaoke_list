@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <title>노래방 리스트</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --card: #1b1e26;
+      --line: #2a2e38;
+      --text: #f2f3f5;
+      --muted: #9aa0ad;
+      --accent: #ff5c8a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Noto Sans KR", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg);
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { font-size: 20px; margin: 0 0 10px; }
+    #search {
+      width: 100%;
+      font-size: 17px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+    }
+    #search:focus { border-color: var(--accent); }
+    main { padding: 12px 16px 48px; max-width: 720px; margin: 0 auto; }
+    .artist {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .artist summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .artist summary::-webkit-details-marker { display: none; }
+    .count { color: var(--muted); font-weight: 400; font-size: 14px; }
+    .artist ol { margin: 0; padding: 0 14px 10px 14px; list-style: none; }
+    .artist li {
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+    }
+    .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+    mark { background: var(--accent); color: #fff; border-radius: 3px; padding: 0 2px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>노래방 리스트</h1>
+    <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off">
+  </header>
+  <main id="list"></main>
+
+  <script src="songs.js"></script>
+  <script>
+    const listEl = document.getElementById('list');
+    const searchEl = document.getElementById('search');
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function highlight(text, q) {
+      if (!q) return escapeHtml(text);
+      const idx = text.toLowerCase().indexOf(q);
+      if (idx < 0) return escapeHtml(text);
+      return escapeHtml(text.slice(0, idx)) +
+        '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' +
+        escapeHtml(text.slice(idx + q.length));
+    }
+
+    function render() {
+      const q = searchEl.value.trim().toLowerCase();
+      const groups = [];
+
+      for (const entry of SONGS) {
+        const artistHit = entry.artist.toLowerCase().includes(q);
+        const songs = q && !artistHit
+          ? entry.songs.filter(s => s.toLowerCase().includes(q))
+          : entry.songs;
+        if (songs.length === 0 && !(artistHit && q)) continue;
+        groups.push({ artist: entry.artist, songs });
+      }
+
+      if (SONGS.length === 0) {
+        listEl.innerHTML = '<p class="empty">songs.js 에 가수와 곡을 추가하세요.</p>';
+        return;
+      }
+      if (groups.length === 0) {
+        listEl.innerHTML = '<p class="empty">검색 결과가 없습니다.</p>';
+        return;
+      }
+
+      listEl.innerHTML = groups.map(g => `
+        <details class="artist" ${q ? 'open' : ''}>
+          <summary>
+            <span>${highlight(g.artist, q)}</span>
+            <span class="count">${g.songs.length}곡</span>
+          </summary>
+          <ol>
+            ${g.songs.map(s => `<li>${highlight(s, q)}</li>`).join('')}
+          </ol>
+        </details>
+      `).join('');
+    }
+
+    searchEl.addEventListener('input', render);
+    render();
+  </script>
+</body>
+</html>
