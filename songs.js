@@ -103,4 +103,12 @@ const SONGS = [
       { title: "Dear. Mr「F」", dam: "5208-26" },
     ],
   },
+  {
+    artist: "ナナヲアカリ (나나오 아카리)",
+    songs: [
+      { title: "Youth", dam: "5200-23" },
+      { title: "たぶん、嘘だね。", dam: "5239-29" },
+      { title: "ハノ", dam: "5175-81" },
+    ],
+  },
 ];
