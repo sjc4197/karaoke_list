@@ -336,6 +336,38 @@
     .inline-form .txt { flex: 1; min-width: 0; }
     .inline-form .btn { flex: none; padding: 0 16px; }
 
+    /* 전체 곡에서 골라 담기 */
+    .pick-artist {
+      position: sticky; top: 0; z-index: 1;
+      background: var(--surface);
+      padding: 12px 0 6px;
+      font-size: 13px; font-weight: 700; color: var(--text-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .pick-artist .ko { font-weight: 500; color: var(--text-3); margin-left: 6px; }
+    .pick-row {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 48px; padding: 6px 4px;
+      cursor: pointer; border-radius: 10px;
+    }
+    .pick-row:active { background: var(--surface-2); }
+    .pick-row input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .pbox {
+      flex: none; width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid var(--text-3);
+      display: grid; place-items: center;
+      transition: background .15s, border-color .15s;
+    }
+    .pbox svg { width: 14px; height: 14px; color: #fff; opacity: 0; transform: scale(.6); transition: .15s; }
+    .pick-row input:checked + .pbox { background: var(--accent); border-color: var(--accent); }
+    .pick-row input:checked + .pbox svg { opacity: 1; transform: scale(1); }
+    .pick-row .song-text { gap: 2px 8px; }
+    .pick-row .song-title { font-size: 16px; }
+    .sheet-btns.sticky {
+      position: sticky; bottom: 0; margin-top: 10px;
+      padding: 10px 0 0; background: var(--surface);
+    }
+
     .lyrics { white-space: pre-wrap; line-height: 1.75; font-size: 16px; margin-top: 4px; }
     .lyrics.empty-ly { color: var(--text-3); text-align: center; padding: 24px 0; }
   </style>
@@ -520,13 +552,14 @@
       if (list) {
         html += `<div class="list-head">
           <div><div class="list-name">${escapeHtml(list.name)}</div><div class="list-meta">${rows.length}곡</div></div>
+          <button type="button" class="text-btn" data-act="bulk-pick">곡 담기</button>
           <button type="button" class="text-btn" data-act="list-rename">이름 변경</button>
-          <button type="button" class="text-btn danger" data-act="list-delete">리스트 삭제</button>
+          <button type="button" class="text-btn danger" data-act="list-delete">삭제</button>
         </div>`;
       }
       if (rows.length === 0) {
         html += list
-          ? '<p class="empty">아직 담긴 곡이 없습니다.<br>전체 탭에서 곡 옆 ⋯ 버튼 → 플레이리스트에 담기</p>'
+          ? '<p class="empty">아직 담긴 곡이 없습니다.<br>위의 "곡 담기"로 전체 곡에서 골라 담거나,<br>전체 탭에서 곡 옆 ⋯ → 플레이리스트에 담기</p>'
           : '<p class="empty">등록된 곡이 없습니다.<br>아래 버튼으로 첫 곡을 추가해 보세요.</p>';
       } else if (shown.length === 0) {
         html += '<p class="empty">검색 결과가 없습니다.</p>';
@@ -622,6 +655,23 @@
       const { error } = await db.from(T_LIST_SONGS).delete().eq('playlist_id', pid).eq('song_id', sid);
       if (error) throw error;
       plSongs = plSongs.filter(r => !(r.playlist_id === pid && r.song_id === sid));
+    }
+    // 리스트의 곡을 선택한 집합으로 맞추기 (추가분 insert, 빠진 분 delete)
+    async function setPlaylistSongs(pid, ids) {
+      const want = new Set(ids);
+      const have = new Set(plSongs.filter(r => r.playlist_id === pid).map(r => r.song_id));
+      const toAdd = [...want].filter(id => !have.has(id));
+      const toRemove = [...have].filter(id => !want.has(id));
+      if (toAdd.length) {
+        const { error } = await db.from(T_LIST_SONGS).insert(toAdd.map(song_id => ({ playlist_id: pid, song_id })));
+        if (error) throw error;
+        for (const song_id of toAdd) plSongs.push({ playlist_id: pid, song_id });
+      }
+      if (toRemove.length) {
+        const { error } = await db.from(T_LIST_SONGS).delete().eq('playlist_id', pid).in('song_id', toRemove);
+        if (error) throw error;
+        plSongs = plSongs.filter(r => !(r.playlist_id === pid && toRemove.includes(r.song_id)));
+      }
     }
 
     // ---------- bottom sheet ----------
@@ -732,6 +782,33 @@
         </form>`);
       sheet.querySelector('input[name=name]').focus();
     }
+    // ----- 전체 곡에서 골라 담기 -----
+    function showBulkPick() {
+      const list = currentList(); if (!list) return;
+      const groups = groupByArtist(songs);
+      const body = groups.map(g => `
+        <div class="pick-artist ja">${escapeHtml(g.artist)}${g.artist_korean ? `<span class="ko">${escapeHtml(g.artist_korean)}</span>` : ''}</div>
+        ${g.songs.map(s => `
+          <label class="pick-row">
+            <input type="checkbox" name="song" value="${s.id}" ${inList(list.id, s.id) ? 'checked' : ''}>
+            <span class="pbox">${CHECK_ICON}</span>
+            <span class="song-text"><span class="song-title ja">${escapeHtml(s.original_title)}</span>${nz(s.dam) ? `<span class="dam">${escapeHtml(s.dam)}</span>` : ''}</span>
+          </label>`).join('')}`).join('');
+      openSheet(sheetHead(`「${list.name}」에 담기`, `${listCount(list.id)}곡 선택`) + `
+        <form data-form="bulk-pick">
+          ${songs.length ? body : '<p class="hint">등록된 곡이 없습니다.</p>'}
+          <div class="sheet-btns sticky">
+            <button type="button" class="btn" data-act="close">취소</button>
+            <button type="submit" class="btn primary">저장</button>
+          </div>
+        </form>`);
+    }
+    function updatePickCount() {
+      const n = sheet.querySelectorAll('form[data-form="bulk-pick"] input[name=song]:checked').length;
+      const sub = sheet.querySelector('.sheet-sub');
+      if (sub) sub.textContent = n + '곡 선택';
+    }
+
     function openRenameList() {
       const list = currentList(); if (!list) return;
       openSheet(sheetHead('리스트 이름 변경') + `
@@ -811,6 +888,19 @@
           sheetError('리스트를 만들지 못했습니다.', err);
         }
       },
+      async 'bulk-pick'(fd) {
+        const list = currentList(); if (!list) return;
+        const ids = fd.getAll('song').map(Number);
+        setBusy(true);
+        try {
+          await setPlaylistSongs(list.id, ids);
+          clearError();
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('플레이리스트를 저장하지 못했습니다.', err);
+        }
+      },
       async 'rename-list'(fd) {
         const list = currentList(); if (!list) return;
         const name = nz(fd.get('name'));
@@ -882,6 +972,9 @@
       const h = forms[e.target.dataset.form];
       if (h) h(new FormData(e.target), e.target);
     });
+    sheet.addEventListener('change', e => {
+      if (e.target.name === 'song') updatePickCount();
+    });
 
     listEl.addEventListener('click', e => {
       const btn = e.target.closest('[data-act]');
@@ -900,6 +993,7 @@
         }
         case 'lyrics': openLyrics(li.dataset.id); break;
         case 'more': openMore(li.dataset.id); break;
+        case 'bulk-pick': showBulkPick(); break;
         case 'list-rename': openRenameList(); break;
         case 'list-delete': {
           const list = currentList(); if (!list) return;
