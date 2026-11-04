@@ -191,6 +191,33 @@
       padding: 6px 0;
       border-top: 1px solid var(--line-soft);
     }
+    .rowbtn {
+      flex: 1 1 auto; min-width: 0;
+      display: flex; align-items: center; gap: 12px;
+      min-height: 44px; padding: 2px 0;
+      text-align: left;
+      transition: background .12s;
+    }
+    .rowbtn:active { background: var(--line-soft); }
+    .box {
+      flex: none; width: 22px; height: 22px; border-radius: 2px;
+      border: 1.5px solid rgba(255, 255, 255, .4);
+      display: grid; place-items: center;
+      transition: background .12s, border-color .12s;
+    }
+    .box svg { width: 14px; height: 14px; color: #000; opacity: 0; transform: scale(.6); transition: opacity .1s, transform .15s; }
+    .song.done .box { background: var(--accent); border-color: var(--accent); animation: snap .18s cubic-bezier(.2, .9, .3, 1) both; }
+    .song.done .box svg { opacity: 1; transform: scale(1); transition-delay: .05s; }
+    .song.done .song-title { color: #7a7a7a; }
+    .song.done .song-title > .ttl { position: relative; display: inline-block; }
+    .song.done .song-title > .ttl::after {
+      content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px;
+      background: var(--accent);
+      animation: strike .28s cubic-bezier(.65, 0, .2, 1) both;
+    }
+    @keyframes strike { from { right: 100%; } to { right: 0; } }
+    .song.done .dam { color: #5a5a5a; }
+    .pill.all { color: var(--accent); }
     .song-text {
       flex: 1 1 auto; min-width: 0;
       display: flex; flex-wrap: wrap; align-items: center;
@@ -427,6 +454,13 @@
     const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
     const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
+    // 체크리스트(불렀음)는 이 폰에만 저장 (localStorage, 곡 id 기준)
+    const SUNG_KEY = 'karaoke-sung';
+    function loadSung() { try { return JSON.parse(localStorage.getItem(SUNG_KEY)) || {}; } catch (e) { return {}; } }
+    function saveSung() { try { localStorage.setItem(SUNG_KEY, JSON.stringify(sung)); } catch (e) {} }
+    let sung = loadSung();   // { [song id]: true }
+    const isSung = id => !!sung[id];
+
     let songs = [];      // songs 테이블 행 목록
     let playlists = [];  // playlists 테이블 행 목록
     let plSongs = [];    // playlist_songs 테이블 행 목록
@@ -497,16 +531,22 @@
         ? `<span class="dam">${highlight(s.dam, q)}</span>`
         : '<span class="dam none">DAM 없음</span>';
       const ko = nz(s.title_korean) ? `<small>${highlight(s.title_korean, q)}</small>` : '';
-      return `<li class="song" data-id="${s.id}">
-        <div class="song-text">
-          <span class="song-title ja">${highlight(s.original_title, q)}${ko}</span>${dam}
-        </div>
+      const done = isSung(s.id);
+      return `<li class="song ${done ? 'done' : ''}" data-id="${s.id}">
+        <button type="button" class="rowbtn" data-act="sung" aria-pressed="${done}" aria-label="불렀음 표시">
+          <span class="box">${CHECK_ICON}</span>
+          <span class="song-text">
+            <span class="song-title ja"><span class="ttl">${highlight(s.original_title, q)}</span>${ko}</span>${dam}
+          </span>
+        </button>
         <div class="song-actions">
           <button type="button" class="ibtn lyr ${nz(s.lyrics) ? 'has' : ''}" data-act="lyrics">${LYRIC_ICON}<span>가사</span></button>
           <button type="button" class="ibtn more" data-act="more" aria-label="메뉴">${MORE_ICON}</button>
         </div>
       </li>`;
     }
+
+    const doneOf = rows => rows.filter(s => isSung(s.id)).length;
 
     function card(g, q, isList) {
       const foot = isList ? '' : `
@@ -519,7 +559,7 @@
         <summary>
           <div class="name ja">${highlight(g.artist, q)}</div>
           ${g.artist_korean ? `<div class="name-sub">${highlight(g.artist_korean, q)}</div>` : ''}
-          <span class="pill">${g.songs.length}곡</span>
+          <span class="pill ${doneOf(g.songs) === g.songs.length ? 'all' : ''}">${doneOf(g.songs)} / ${g.songs.length}</span>
           ${CHEVRON}
         </summary>
         <ul>${g.songs.map(s => songRow(s, q)).join('')}</ul>
@@ -587,9 +627,8 @@
         if (openSet.has(d.dataset.artist) || forceOpen === d.dataset.artist) d.open = true;
       }
       forceOpen = null;
-      totalEl.innerHTML = list
-        ? '<b>' + rows.length + '</b>곡 담김'
-        : '<b>' + groups.length + '</b>명 · ' + songs.length + '곡';
+      const done = doneOf(rows);
+      totalEl.innerHTML = '<b>' + done + '</b> / ' + rows.length + '곡 불렀음' + (list ? '' : ' · ' + groups.length + '명');
       countEl.innerHTML = '<b>' + rows.length + '</b><span>SONGS</span>';
     }
 
@@ -622,6 +661,7 @@
       if (error) throw error;
       songs = songs.filter(s => s.id !== id);
       plSongs = plSongs.filter(r => r.song_id !== id); // DB 쪽은 on delete cascade
+      delete sung[id]; saveSung();
     }
     // 가수 삭제 = 그 가수의 곡 전부 삭제 (가수는 곡의 artist 값으로만 존재)
     async function deleteArtist(artist) {
@@ -630,6 +670,8 @@
       const ids = new Set(songs.filter(s => s.artist === artist).map(s => s.id));
       songs = songs.filter(s => !ids.has(s.id));
       plSongs = plSongs.filter(r => !ids.has(r.song_id));
+      for (const id of ids) delete sung[id];
+      saveSung();
     }
 
     // ----- 플레이리스트 -----
@@ -1017,6 +1059,13 @@
           deleteArtist(artist)
             .then(() => { clearError(); render(); })
             .catch(err => showError('가수를 삭제하지 못했습니다.', err));
+          break;
+        }
+        case 'sung': {
+          const id = Number(li.dataset.id);
+          if (sung[id]) delete sung[id]; else sung[id] = true;
+          saveSung();
+          render();
           break;
         }
         case 'lyrics': openLyrics(li.dataset.id); break;
