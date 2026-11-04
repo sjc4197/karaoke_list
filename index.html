@@ -274,8 +274,10 @@
     dialog.sheet::backdrop { background: rgba(0, 0, 0, .7); }
     .sheet-in {
       max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
     }
+    body.locked { position: fixed; left: 0; right: 0; overflow: hidden; }
     .grab { width: 36px; height: 3px; border-radius: 99px; background: rgba(255, 255, 255, .25); margin: 0 auto 16px; }
     .sheet-title { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; }
     .sheet-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
@@ -688,12 +690,25 @@
     }
 
     // ---------- bottom sheet ----------
+    // 시트가 열린 동안 뒤의 본문이 스크롤되지 않게 고정 (iOS 사파리 스크롤 체이닝 방지)
+    let lockY = 0;
+    function lockBody() {
+      lockY = window.scrollY || 0;
+      document.body.style.top = -lockY + 'px';
+      document.body.classList.add('locked');
+    }
+    function unlockBody() {
+      document.body.classList.remove('locked');
+      document.body.style.top = '';
+      window.scrollTo(0, lockY);
+    }
     function openSheet(html) {
       sheet.innerHTML = '<div class="sheet-in"><div class="grab"></div>' + html + '</div>';
-      if (!sheet.open) sheet.showModal();
+      if (!sheet.open) { lockBody(); sheet.showModal(); }
       sheet.querySelector('.sheet-in').scrollTop = 0;
     }
     function closeSheet() { if (sheet.open) sheet.close(); }
+    sheet.addEventListener('close', unlockBody);
     function sheetHead(title, sub, ja) {
       return `<div class="sheet-head"><h2 class="sheet-title ${ja ? 'ja' : ''}">${escapeHtml(title)}</h2>${sub ? `<div class="sheet-sub">${escapeHtml(sub)}</div>` : ''}</div><p class="sheet-err"></p>`;
     }
