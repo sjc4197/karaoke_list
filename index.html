@@ -3,43 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000">
   <title>노래방 리스트</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+JP:wght@500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f6f5f2;
-      --surface: #ffffff;
-      --surface-2: #f0efeb;
-      --line: #e4e2dc;
-      --text: #1c1b19;
-      --text-2: #6b6964;
-      --text-3: #a09d96;
-      --accent: #e8457a;
-      --accent-soft: #fde6ee;
-      --danger: #d9453d;
-      --danger-soft: #fdeceb;
-      --shadow: 0 1px 2px rgba(20, 18, 12, .05), 0 6px 20px rgba(20, 18, 12, .06);
-      --radius: 18px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f1117;
-        --surface: #181b23;
-        --surface-2: #20242e;
-        --line: #2a2e3a;
-        --text: #f1f2f5;
-        --text-2: #a4a8b4;
-        --text-3: #6c7080;
-        --accent: #ff5f90;
-        --accent-soft: #3a1f2b;
-        --danger: #ff6b63;
-        --danger-soft: #3d2222;
-        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
-      }
+      --bg: #000000;
+      --surface: #000000;
+      --surface-2: #141414;
+      --line: rgba(255, 255, 255, .14);
+      --line-soft: rgba(255, 255, 255, .08);
+      --text: #ffffff;
+      --text-2: #9a9a9a;
+      --text-3: #6e6e6e;
+      --accent: #c6ff3d;
+      --accent-soft: rgba(198, 255, 61, .14);
+      --danger: #ff5a4f;
+      --danger-soft: rgba(255, 90, 79, .14);
+      --shadow: none;
+      --radius: 4px;
+      --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -56,282 +41,294 @@
       -webkit-font-smoothing: antialiased;
     }
     .ja { font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Noto Sans KR", sans-serif; }
-    button { font: inherit; color: inherit; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; margin: 0; }
 
     /* ---------- header ---------- */
     header {
       position: sticky; top: 0; z-index: 10;
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      -webkit-backdrop-filter: blur(14px);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--line);
-      padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+      background: var(--bg);
+      padding: calc(14px + env(safe-area-inset-top)) 20px 0;
     }
     .header-inner { max-width: 640px; margin: 0 auto; }
-    .title-row {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 12px; margin-bottom: 10px;
-    }
-    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-    .total { font-size: 13px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
-    .total b { color: var(--accent); font-weight: 700; }
-    .search { position: relative; }
+    .brand { display: flex; align-items: center; gap: 14px; padding: 10px 0 16px; }
+    .logo { display: block; flex: none; transform-origin: center; animation: logoPulse 5s ease-in-out 1.8s infinite; }
+    .logo .ring { stroke-dasharray: 138.3; stroke-dashoffset: 138.3; animation: logoDraw 1s cubic-bezier(.65, 0, .2, 1) .1s forwards; }
+    .logo .fill { opacity: 0; animation: logoFill .25s ease-out 1s forwards; }
+    .logo .mark { opacity: 0; transform-origin: 24px 24px; animation: logoMark .3s cubic-bezier(.2, .9, .3, 1.3) 1.05s forwards; }
+    @keyframes logoDraw { to { stroke-dashoffset: 0; } }
+    @keyframes logoFill { to { opacity: 1; } }
+    @keyframes logoMark { 0% { opacity: 0; transform: scale(.7); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes logoPulse { 0%, 100% { transform: scale(1); } 3% { transform: scale(1.07); } 6% { transform: scale(1); } }
+    .brand-text { flex: 1; min-width: 0; }
+    h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -.03em; line-height: 1; }
+    .total { font-size: 13px; color: var(--text-2); margin-top: 6px; letter-spacing: .02em; }
+    .total b { color: var(--text); font-weight: 700; }
+    .count { text-align: right; line-height: 1; flex: none; }
+    .count b { display: block; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+    .count span { display: block; font-size: 11px; color: var(--text-2); margin-top: 4px; letter-spacing: .14em; }
+
+    .search { position: relative; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
     .search svg {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      width: 18px; height: 18px; color: var(--text-3); pointer-events: none;
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; color: var(--text-2); pointer-events: none;
     }
     #search {
-      width: 100%;
+      width: 100%; height: 50px;
       font: inherit; font-size: 16px;
-      padding: 12px 14px 12px 42px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: var(--surface);
+      padding: 0 0 0 32px;
+      border: 0; border-radius: 0;
+      background: transparent;
       color: var(--text);
       outline: none;
-      box-shadow: var(--shadow);
-      transition: border-color .15s, box-shadow .15s;
       -webkit-appearance: none;
     }
-    #search::placeholder { color: var(--text-3); }
-    #search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    #search::placeholder { color: var(--text-2); }
+    #search:focus { box-shadow: inset 0 -2px 0 var(--accent); }
+    #search::-webkit-search-cancel-button { -webkit-appearance: none; }
 
     /* ---------- tabs (전체 / 플레이리스트) ---------- */
     .tabs {
-      display: none; gap: 8px;
+      display: none; gap: 0;
       overflow-x: auto; scrollbar-width: none;
-      margin: 0 -16px; padding: 12px 16px 0;
+      border-bottom: 1px solid var(--line);
     }
     .tabs.show { display: flex; }
     .tabs::-webkit-scrollbar { display: none; }
     .chip {
       flex: none;
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 14px; border-radius: 99px;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      font-size: 14px; font-weight: 600;
+      height: 44px; padding: 0 2px; margin-right: 24px; margin-bottom: -1px;
+      border-bottom: 2px solid transparent;
+      font-size: 15px; font-weight: 700;
       color: var(--text-2);
-      cursor: pointer; white-space: nowrap;
-      max-width: 220px;
+      white-space: nowrap; max-width: 220px;
+      transition: color .12s, background .12s;
     }
     .chip .label { overflow: hidden; text-overflow: ellipsis; }
-    .chip .n {
-      font-size: 12px; font-weight: 700;
-      padding: 0 7px; border-radius: 99px; line-height: 18px;
-      background: var(--surface-2); color: var(--text-3);
-    }
-    .chip.on { background: var(--text); border-color: var(--text); color: var(--bg); }
-    .chip.on .n { background: rgba(255,255,255,.18); color: inherit; }
-    @media (prefers-color-scheme: dark) { .chip.on .n { background: rgba(0,0,0,.18); } }
-    .chip.add { border-style: dashed; color: var(--text-3); }
+    .chip .n { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text-3); }
+    .chip.on { color: var(--text); border-bottom-color: var(--accent); }
+    .chip.on .n { color: var(--text-2); }
+    .chip:active { color: #000; background: #fff; }
+    .chip.add { color: var(--text-3); }
 
     .list-head {
-      display: flex; align-items: center; gap: 10px;
-      padding: 2px 4px 14px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 16px 0 12px;
     }
-    .list-head > div { flex: 1; min-width: 0; }
-    .list-name { font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
-    .list-meta { font-size: 13px; color: var(--text-2); }
+    .list-head > div { flex: 1 1 100%; min-width: 0; }
+    .list-name { font-size: 26px; font-weight: 900; letter-spacing: -.02em; line-height: 1.15; overflow-wrap: anywhere; }
+    .list-meta { font-family: var(--mono); font-size: 13px; color: var(--text-2); margin-top: 3px; }
     .text-btn {
       flex: none;
-      background: var(--surface); border: 1px solid var(--line);
-      border-radius: 10px; padding: 6px 10px;
-      font-size: 13px; font-weight: 600; color: var(--text-2);
-      cursor: pointer;
+      height: 34px; padding: 0 10px;
+      border: 1px solid rgba(255, 255, 255, .28); border-radius: 3px;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      transition: background .12s, color .12s, border-color .12s;
     }
+    .text-btn:active { background: #fff; color: #000; border-color: #fff; }
     .text-btn.danger { color: var(--danger); }
 
     /* ---------- error banner ---------- */
     .error {
       display: none;
       max-width: 640px; margin: 12px auto 0;
-      padding: 10px 14px; border-radius: 12px;
+      padding: 10px 14px; border-radius: 3px;
       background: var(--danger-soft); color: var(--danger);
-      border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+      border: 1px solid rgba(255, 90, 79, .4);
       font-size: 14px; font-weight: 500; line-height: 1.5;
       overflow-wrap: anywhere;
     }
     .error.show { display: block; }
-    .error-wrap { padding: 0 16px; }
+    .error-wrap { padding: 0 20px; }
 
     /* ---------- list ---------- */
     main {
       max-width: 640px; margin: 0 auto;
-      padding: 16px 16px calc(56px + env(safe-area-inset-bottom));
+      padding: 0 20px calc(110px + env(safe-area-inset-bottom));
     }
-    .artist {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 12px;
-      overflow: hidden;
-    }
+    .artist { border-top: 1px solid var(--line); }
+    .artist:last-of-type { border-bottom: 1px solid var(--line); }
     .artist summary {
       list-style: none;
       cursor: pointer;
-      padding: 14px 16px 12px;
+      padding: 14px 0;
       display: grid;
       grid-template-columns: 1fr auto auto;
       grid-template-rows: auto auto;
       column-gap: 12px;
       align-items: center;
       user-select: none;
+      transition: background .12s;
     }
     .artist summary::-webkit-details-marker { display: none; }
-    .artist summary:active { background: var(--surface-2); }
+    .artist summary:active { background: var(--line-soft); }
     .name {
       grid-column: 1; grid-row: 1;
-      font-size: 19px; font-weight: 700; line-height: 1.3;
-      letter-spacing: -.01em;
+      font-size: 26px; font-weight: 900; line-height: 1.15;
+      letter-spacing: -.02em;
       overflow-wrap: anywhere;
     }
-    .name-sub { grid-column: 1; grid-row: 2; font-size: 13px; color: var(--text-2); margin-top: 2px; }
+    .name-sub { grid-column: 1; grid-row: 2; font-size: 13px; font-weight: 500; color: var(--text-2); margin-top: 3px; }
     .pill {
       grid-column: 2; grid-row: 1 / span 2;
-      font-size: 13px; font-weight: 700;
-      padding: 4px 10px; border-radius: 99px;
-      background: var(--surface-2); color: var(--text-2);
+      font-family: var(--mono); font-size: 14px; font-weight: 500;
+      color: var(--text-2);
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
     .chev {
       grid-column: 3; grid-row: 1 / span 2;
-      width: 20px; height: 20px; color: var(--text-3);
-      transition: transform .2s ease;
+      width: 20px; height: 20px; color: var(--text-2);
+      transition: transform .2s ease, color .2s;
     }
-    details[open] .chev { transform: rotate(180deg); }
-    details[open] summary { border-bottom: 1px solid var(--line); }
+    details[open] .chev { transform: rotate(180deg); color: var(--text); }
 
-    .artist ul { list-style: none; margin: 0; padding: 4px 8px 4px; }
+    .artist ul { list-style: none; margin: 0; padding: 0; }
     .song {
-      display: flex; align-items: center; gap: 8px;
-      min-height: 52px;
-      padding: 6px 4px 6px 12px;
-      border-radius: 12px;
+      display: flex; align-items: center; gap: 6px;
+      min-height: 56px;
+      padding: 6px 0;
+      border-top: 1px solid var(--line-soft);
     }
     .song-text {
       flex: 1 1 auto; min-width: 0;
       display: flex; flex-wrap: wrap; align-items: center;
-      gap: 3px 10px;
+      gap: 2px 10px;
     }
-    .song-title { font-size: 17px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
-    .song-title small { display: block; font-size: 12px; font-weight: 400; color: var(--text-2); }
+    .song-title { font-size: 18px; font-weight: 500; line-height: 1.25; overflow-wrap: anywhere; }
+    .song-title small { display: block; font-size: 12px; font-weight: 400; color: var(--text-2); margin-top: 2px; }
     .dam {
       flex: none;
-      font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
-      font-size: 13px; font-weight: 600; letter-spacing: .02em;
+      font-family: var(--mono);
+      font-size: 14px; font-weight: 500;
       font-variant-numeric: tabular-nums;
-      padding: 2px 7px; border-radius: 7px;
-      background: var(--accent-soft); color: var(--accent);
+      color: var(--text-2);
       white-space: nowrap;
+      margin-left: auto; padding-right: 8px;
     }
-    .dam.none {
-      background: var(--surface-2); color: var(--text-3);
-      font-family: inherit; font-weight: 500; font-size: 12px;
-    }
+    .dam.none { font-family: inherit; font-size: 12px; color: var(--text-3); }
 
     .song-actions { flex: none; display: flex; align-items: center; gap: 4px; }
     .ibtn {
       display: inline-flex; align-items: center; justify-content: center; gap: 4px;
       height: 34px; min-width: 34px;
-      border: 1px solid var(--line); border-radius: 10px;
-      background: var(--surface);
-      color: var(--text-2); cursor: pointer;
-      padding: 0 9px;
-      font-size: 13px; font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, .28); border-radius: 3px;
+      background: transparent;
+      color: var(--text);
+      padding: 0 10px;
+      font-size: 13px; font-weight: 700;
+      transition: background .12s, color .12s, border-color .12s;
     }
-    .ibtn:active { background: var(--surface-2); }
-    .ibtn svg { width: 16px; height: 16px; }
-    .ibtn.more { padding: 0; width: 34px; color: var(--text-3); }
-    .ibtn.lyr.has { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+    .ibtn:active { background: #fff; color: #000; border-color: #fff; }
+    .ibtn svg { width: 20px; height: 20px; }
+    .ibtn.more { padding: 0; width: 34px; border-color: transparent; color: var(--text-2); }
+    .ibtn.more:active { background: #fff; color: #000; }
+    .ibtn.lyr.has { border-color: var(--accent); color: var(--accent); }
+    .ibtn.lyr.has:active { background: var(--accent); color: #000; }
 
-    .card-foot { display: flex; align-items: center; gap: 8px; padding: 0 8px 8px; }
-    .card-foot .text-btn { background: transparent; border-color: transparent; min-height: 44px; }
+    .card-foot { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line-soft); }
+    .card-foot .text-btn { border-color: transparent; color: var(--danger); }
     .add-row {
       flex: 1; width: 100%;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      min-height: 44px;
-      border: 1px dashed var(--line); border-radius: 12px;
+      display: flex; align-items: center; gap: 6px;
+      min-height: 44px; padding-left: 32px;
       background: transparent;
-      color: var(--text-3); font-size: 14px; font-weight: 600;
-      cursor: pointer;
+      color: var(--text-2); font-size: 14px; font-weight: 700;
+      transition: background .12s, color .12s;
     }
-    .add-row:active { background: var(--surface-2); }
+    .add-row:active { background: #fff; color: #000; }
     .add-row svg { width: 16px; height: 16px; }
-    .add-row.global {
-      min-height: 56px; font-size: 15px;
-      border-color: var(--text-3); color: var(--text-2);
-      border-radius: var(--radius);
-      margin-top: 4px;
-    }
 
-    mark { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 0 2px; }
-    .empty { color: var(--text-3); text-align: center; padding: 48px 12px; font-size: 15px; line-height: 1.7; }
+    .foot {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;
+      padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, #000 75%, transparent);
+      display: none;
+    }
+    .foot.show { display: block; }
+    .foot .primary { max-width: 640px; margin: 0 auto; }
+    .primary {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; height: 56px; border-radius: 4px;
+      background: var(--accent); color: #000;
+      font-size: 17px; font-weight: 900; letter-spacing: -.01em;
+      transition: background .12s;
+    }
+    .primary:active { background: #fff; }
+    .primary svg { width: 18px; height: 18px; }
+
+    mark { background: var(--accent-soft); color: var(--accent); border-radius: 2px; padding: 0 2px; }
+    .empty { color: var(--text-2); text-align: center; padding: 48px 12px; font-size: 15px; line-height: 1.7; }
 
     /* ---------- bottom sheet ---------- */
     dialog.sheet {
       border: 0; padding: 0;
       inset: auto 0 0 0; margin: 0 auto;
       width: 100%; max-width: 640px; max-height: 92dvh;
-      background: var(--surface); color: var(--text);
-      border-radius: 22px 22px 0 0;
-      box-shadow: 0 -8px 40px rgba(0,0,0,.25);
+      background: var(--surface-2); color: var(--text);
+      border-top: 1px solid var(--line);
+      border-radius: 8px 8px 0 0;
       overflow: hidden;
     }
-    dialog.sheet::backdrop { background: rgba(0, 0, 0, .45); }
+    dialog.sheet::backdrop { background: rgba(0, 0, 0, .7); }
     .sheet-in {
       max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
       padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
     }
-    .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 14px; }
-    .sheet-title { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
-    .sheet-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
-    .sheet-head { margin-bottom: 16px; }
+    .grab { width: 36px; height: 3px; border-radius: 99px; background: rgba(255, 255, 255, .25); margin: 0 auto 16px; }
+    .sheet-title { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; }
+    .sheet-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+    .sheet-head { margin-bottom: 18px; }
     .sheet-err { display: none; margin: 0 0 12px; font-size: 13px; color: var(--danger); overflow-wrap: anywhere; }
     .sheet-err.show { display: block; }
 
     .field { display: block; margin-bottom: 14px; }
-    .field > span { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+    .field > span { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; letter-spacing: .04em; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .txt {
       width: 100%; font: inherit; font-size: 16px;
-      padding: 11px 13px;
-      border: 1px solid var(--line); border-radius: 12px;
-      background: var(--surface-2); color: var(--text);
+      padding: 11px 12px;
+      border: 1px solid rgba(255, 255, 255, .28); border-radius: 3px;
+      background: #000; color: var(--text);
       outline: none; -webkit-appearance: none;
     }
-    .txt:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+    .txt:focus { border-color: var(--accent); }
     .txt::placeholder { color: var(--text-3); }
     .txt:disabled { opacity: .6; }
+    .txt[readonly] { color: var(--text-2); }
     textarea.txt { min-height: 220px; resize: vertical; line-height: 1.6; }
     .sheet-btns { display: flex; gap: 10px; margin-top: 18px; }
     .btn {
-      flex: 1; min-height: 46px;
-      border: 1px solid var(--line); border-radius: 13px;
-      background: var(--surface-2); color: var(--text);
-      font-size: 15px; font-weight: 700; cursor: pointer;
+      flex: 1; min-height: 48px;
+      border: 1px solid rgba(255, 255, 255, .28); border-radius: 3px;
+      background: transparent; color: var(--text);
+      font-size: 15px; font-weight: 700;
+      transition: background .12s, color .12s;
     }
-    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn:active { background: #fff; color: #000; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 900; height: auto; }
+    .btn.primary:active { background: #fff; border-color: #fff; }
     .btn:disabled { opacity: .55; cursor: default; }
 
     .menu { display: flex; flex-direction: column; gap: 6px; }
     .menu button {
       display: flex; align-items: center; gap: 10px;
       width: 100%; min-height: 50px; padding: 0 14px;
-      border: 1px solid var(--line); border-radius: 13px;
-      background: var(--surface-2); color: var(--text);
-      font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, .28); border-radius: 3px;
+      background: transparent; color: var(--text);
+      font-size: 15px; font-weight: 700; text-align: left;
+      transition: background .12s, color .12s;
     }
+    .menu button:active { background: #fff; color: #000; }
     .menu button.danger { color: var(--danger); }
     .menu button svg { width: 18px; height: 18px; flex: none; }
     .menu button:disabled { opacity: .55; }
     .menu button .label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-    .menu button .count { font-size: 13px; color: var(--text-3); font-weight: 500; }
-    .menu button.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+    .menu button .count { font-family: var(--mono); font-size: 13px; color: var(--text-2); font-weight: 500; }
+    .menu button.on { border-color: var(--accent); color: var(--accent); }
     .menu button.on .count { color: inherit; opacity: .8; }
-    .hint { color: var(--text-3); font-size: 14px; text-align: center; margin: 10px 0 0; }
+    .hint { color: var(--text-2); font-size: 14px; text-align: center; margin: 10px 0 0; }
     .inline-form { display: flex; gap: 8px; margin-top: 14px; }
     .inline-form .txt { flex: 1; min-width: 0; }
     .inline-form .btn { flex: none; padding: 0 16px; }
@@ -339,35 +336,39 @@
     /* 전체 곡에서 골라 담기 */
     .pick-artist {
       position: sticky; top: 0; z-index: 1;
-      background: var(--surface);
-      padding: 12px 0 6px;
-      font-size: 13px; font-weight: 700; color: var(--text-2);
+      background: var(--surface-2);
+      padding: 14px 0 6px;
+      font-size: 13px; font-weight: 900; color: var(--text);
       border-bottom: 1px solid var(--line);
     }
-    .pick-artist .ko { font-weight: 500; color: var(--text-3); margin-left: 6px; }
+    .pick-artist .ko { font-weight: 500; color: var(--text-2); margin-left: 6px; }
     .pick-row {
       display: flex; align-items: center; gap: 12px;
-      min-height: 48px; padding: 6px 4px;
-      cursor: pointer; border-radius: 10px;
+      min-height: 50px; padding: 6px 0;
+      cursor: pointer;
+      border-bottom: 1px solid var(--line-soft);
+      transition: background .12s;
     }
-    .pick-row:active { background: var(--surface-2); }
+    .pick-row:active { background: var(--line-soft); }
     .pick-row input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
     .pbox {
-      flex: none; width: 24px; height: 24px; border-radius: 50%;
-      border: 2px solid var(--text-3);
+      flex: none; width: 22px; height: 22px; border-radius: 2px;
+      border: 1.5px solid rgba(255, 255, 255, .4);
       display: grid; place-items: center;
-      transition: background .15s, border-color .15s;
+      transition: background .12s, border-color .12s;
     }
-    .pbox svg { width: 14px; height: 14px; color: #fff; opacity: 0; transform: scale(.6); transition: .15s; }
-    .pick-row input:checked + .pbox { background: var(--accent); border-color: var(--accent); }
+    .pbox svg { width: 14px; height: 14px; color: #000; opacity: 0; transform: scale(.6); transition: opacity .1s, transform .15s; }
+    @keyframes snap { 0% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    .pick-row input:checked + .pbox { background: var(--accent); border-color: var(--accent); animation: snap .18s cubic-bezier(.2, .9, .3, 1) both; }
     .pick-row input:checked + .pbox svg { opacity: 1; transform: scale(1); }
     .pick-row .song-text { gap: 2px 8px; }
-    .pick-row .song-title { font-size: 16px; }
+    .pick-row .song-title { font-size: 17px; }
     .sheet-btns.sticky {
       position: sticky; bottom: 0; margin-top: 10px;
-      padding: 10px 0 0; background: var(--surface);
+      padding: 10px 0 0; background: var(--surface-2);
     }
 
+    /* 가사 보기: 기존 레이아웃 유지 */
     .lyrics { white-space: pre-wrap; line-height: 1.75; font-size: 16px; margin-top: 4px; }
     .lyrics.empty-ly { color: var(--text-3); text-align: center; padding: 24px 0; }
   </style>
@@ -375,12 +376,20 @@
 <body>
   <header>
     <div class="header-inner">
-      <div class="title-row">
-        <h1>노래방 리스트</h1>
-        <div class="total" id="total"></div>
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="노래방 리스트 로고">
+          <circle class="ring" cx="24" cy="24" r="22" fill="none" stroke="#c6ff3d" stroke-width="2" transform="rotate(-90 24 24)"/>
+          <circle class="fill" cx="24" cy="24" r="22" fill="#c6ff3d"/>
+          <text class="mark ja" x="24" y="25" text-anchor="middle" dominant-baseline="central" font-size="25" font-weight="900" fill="#000">歌</text>
+        </svg>
+        <div class="brand-text">
+          <h1>노래방 리스트</h1>
+          <div class="total mono" id="total"></div>
+        </div>
+        <div class="count mono" id="count"></div>
       </div>
       <div class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off" enterkeyhint="search">
       </div>
       <div class="tabs" id="tabs"></div>
@@ -388,6 +397,7 @@
   </header>
   <div class="error-wrap"><div class="error" id="error" role="alert"></div></div>
   <main id="list"><p class="empty">불러오는 중…</p></main>
+  <div class="foot" id="foot"><button type="button" class="primary" data-act="add-artist">＋ 곡 추가 (새 가수)</button></div>
   <dialog class="sheet" id="sheet"></dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -404,6 +414,8 @@
     const totalEl = document.getElementById('total');
     const errorEl = document.getElementById('error');
     const tabsEl = document.getElementById('tabs');
+    const countEl = document.getElementById('count');
+    const footEl = document.getElementById('foot');
     const sheet = document.getElementById('sheet');
 
     const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
@@ -566,7 +578,7 @@
       } else {
         html += shown.map(g => card(g, q, !!list)).join('');
       }
-      if (!list) html += `<button type="button" class="add-row global" data-act="add-song">${PLUS_ICON} 곡 추가 (새 가수)</button>`;
+      footEl.classList.toggle('show', !list);
       listEl.innerHTML = html;
 
       for (const d of listEl.querySelectorAll('details')) {
@@ -574,8 +586,9 @@
       }
       forceOpen = null;
       totalEl.innerHTML = list
-        ? '<b>' + rows.length + '</b>곡'
+        ? '<b>' + rows.length + '</b>곡 담김'
         : '<b>' + groups.length + '</b>명 · ' + songs.length + '곡';
+      countEl.innerHTML = '<b>' + rows.length + '</b><span>SONGS</span>';
     }
 
     // ---------- data ----------
@@ -1004,6 +1017,10 @@
           break;
         }
       }
+    });
+
+    footEl.addEventListener('click', e => {
+      if (e.target.closest('[data-act="add-artist"]')) openAddSong('');
     });
 
     tabsEl.addEventListener('click', e => {
