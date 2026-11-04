@@ -96,6 +96,52 @@
     #search::placeholder { color: var(--text-3); }
     #search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
+    /* ---------- tabs (전체 / 플레이리스트) ---------- */
+    .tabs {
+      display: none; gap: 8px;
+      overflow-x: auto; scrollbar-width: none;
+      margin: 0 -16px; padding: 12px 16px 0;
+    }
+    .tabs.show { display: flex; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 99px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      font-size: 14px; font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer; white-space: nowrap;
+      max-width: 220px;
+    }
+    .chip .label { overflow: hidden; text-overflow: ellipsis; }
+    .chip .n {
+      font-size: 12px; font-weight: 700;
+      padding: 0 7px; border-radius: 99px; line-height: 18px;
+      background: var(--surface-2); color: var(--text-3);
+    }
+    .chip.on { background: var(--text); border-color: var(--text); color: var(--bg); }
+    .chip.on .n { background: rgba(255,255,255,.18); color: inherit; }
+    @media (prefers-color-scheme: dark) { .chip.on .n { background: rgba(0,0,0,.18); } }
+    .chip.add { border-style: dashed; color: var(--text-3); }
+
+    .list-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 2px 4px 14px;
+    }
+    .list-head > div { flex: 1; min-width: 0; }
+    .list-name { font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
+    .list-meta { font-size: 13px; color: var(--text-2); }
+    .text-btn {
+      flex: none;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 10px; padding: 6px 10px;
+      font-size: 13px; font-weight: 600; color: var(--text-2);
+      cursor: pointer;
+    }
+    .text-btn.danger { color: var(--danger); }
+
     /* ---------- error banner ---------- */
     .error {
       display: none;
@@ -280,6 +326,14 @@
     .menu button.danger { color: var(--danger); }
     .menu button svg { width: 18px; height: 18px; flex: none; }
     .menu button:disabled { opacity: .55; }
+    .menu button .label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    .menu button .count { font-size: 13px; color: var(--text-3); font-weight: 500; }
+    .menu button.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+    .menu button.on .count { color: inherit; opacity: .8; }
+    .hint { color: var(--text-3); font-size: 14px; text-align: center; margin: 10px 0 0; }
+    .inline-form { display: flex; gap: 8px; margin-top: 14px; }
+    .inline-form .txt { flex: 1; min-width: 0; }
+    .inline-form .btn { flex: none; padding: 0 16px; }
 
     .lyrics { white-space: pre-wrap; line-height: 1.75; font-size: 16px; margin-top: 4px; }
     .lyrics.empty-ly { color: var(--text-3); text-align: center; padding: 24px 0; }
@@ -296,6 +350,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off" enterkeyhint="search">
       </div>
+      <div class="tabs" id="tabs"></div>
     </div>
   </header>
   <div class="error-wrap"><div class="error" id="error" role="alert"></div></div>
@@ -307,12 +362,15 @@
     const SUPABASE_URL = 'https://sadeuuhrnlazabipyvob.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_MbQ4ecEbz-nl8STJa6WKVg_LTJSekPH';
     const TABLE = 'songs';
+    const T_LISTS = 'playlists';        // { id, name }
+    const T_LIST_SONGS = 'playlist_songs'; // { playlist_id, song_id }
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const listEl = document.getElementById('list');
     const searchEl = document.getElementById('search');
     const totalEl = document.getElementById('total');
     const errorEl = document.getElementById('error');
+    const tabsEl = document.getElementById('tabs');
     const sheet = document.getElementById('sheet');
 
     const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
@@ -320,10 +378,19 @@
     const MORE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
     const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
     const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+    const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
     let songs = [];      // songs 테이블 행 목록
+    let playlists = [];  // playlists 테이블 행 목록
+    let plSongs = [];    // playlist_songs 테이블 행 목록
+    let plReady = false; // 플레이리스트 테이블을 정상적으로 불러왔는지
+    let view = 'all';    // 'all' 또는 플레이리스트 id
     let ctx = {};        // 시트에서 다루는 현재 곡
     let forceOpen = null;
+
+    const currentList = () => playlists.find(p => p.id === view) || null;
+    const inList = (pid, sid) => plSongs.some(r => r.playlist_id === pid && r.song_id === sid);
+    const listCount = pid => plSongs.filter(r => r.playlist_id === pid).length;
 
     // ---------- errors ----------
     function showError(message, err) {
@@ -394,7 +461,11 @@
       </li>`;
     }
 
-    function card(g, q) {
+    function card(g, q, isList) {
+      const foot = isList ? '' : `
+        <div class="card-foot">
+          <button type="button" class="add-row" data-act="add-song" data-artist="${escapeHtml(g.artist)}">${PLUS_ICON} 곡 추가</button>
+        </div>`;
       return `
       <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
         <summary>
@@ -404,37 +475,72 @@
           ${CHEVRON}
         </summary>
         <ul>${g.songs.map(s => songRow(s, q)).join('')}</ul>
-        <div class="card-foot">
-          <button type="button" class="add-row" data-act="add-song" data-artist="${escapeHtml(g.artist)}">${PLUS_ICON} 곡 추가</button>
-        </div>
+        ${foot}
       </details>`;
+    }
+
+    function renderTabs() {
+      tabsEl.classList.toggle('show', plReady);
+      if (!plReady) { tabsEl.innerHTML = ''; return; }
+      tabsEl.innerHTML =
+        `<button type="button" class="chip ${view === 'all' ? 'on' : ''}" data-view="all"><span class="label">전체</span></button>` +
+        playlists.map(p =>
+          `<button type="button" class="chip ${view === p.id ? 'on' : ''}" data-view="${p.id}">
+            <span class="label">${escapeHtml(p.name)}</span><span class="n">${listCount(p.id)}</span>
+          </button>`).join('') +
+        `<button type="button" class="chip add" data-act="new-list">＋ 새 리스트</button>`;
     }
 
     function render() {
       const q = searchEl.value.trim().toLowerCase();
       const openSet = new Set([...listEl.querySelectorAll('details[open]')].map(d => d.dataset.artist));
-      const groups = groupByArtist(songs);
+      if (view !== 'all' && !currentList()) view = 'all';
+      const list = currentList();
+      renderTabs();
+
+      // 현재 뷰의 곡 (전체 또는 플레이리스트에 담긴 곡만)
+      let rows = songs;
+      if (list) {
+        const ids = new Set(plSongs.filter(r => r.playlist_id === list.id).map(r => r.song_id));
+        rows = songs.filter(s => ids.has(s.id));
+      }
+      const groups = groupByArtist(rows);
 
       const shown = [];
       for (const g of groups) {
         const artistHit = g.artist.toLowerCase().includes(q) || g.artist_korean.toLowerCase().includes(q);
-        const rows = q && !artistHit ? g.songs.filter(s => songMatches(s, q)) : g.songs;
-        if (q && rows.length === 0 && !artistHit) continue;
-        shown.push({ ...g, songs: rows });
+        const gs = q && !artistHit ? g.songs.filter(s => songMatches(s, q)) : g.songs;
+        if (q && gs.length === 0 && !artistHit) continue;
+        shown.push({ ...g, songs: gs });
       }
 
       let html = '';
-      if (songs.length === 0) html += '<p class="empty">등록된 곡이 없습니다.<br>아래 버튼으로 첫 곡을 추가해 보세요.</p>';
-      else if (shown.length === 0) html += '<p class="empty">검색 결과가 없습니다.</p>';
-      else html += shown.map(g => card(g, q)).join('');
-      html += `<button type="button" class="add-row global" data-act="add-song">${PLUS_ICON} 곡 추가 (새 가수)</button>`;
+      if (list) {
+        html += `<div class="list-head">
+          <div><div class="list-name">${escapeHtml(list.name)}</div><div class="list-meta">${rows.length}곡</div></div>
+          <button type="button" class="text-btn" data-act="list-rename">이름 변경</button>
+          <button type="button" class="text-btn danger" data-act="list-delete">리스트 삭제</button>
+        </div>`;
+      }
+      if (rows.length === 0) {
+        html += list
+          ? '<p class="empty">아직 담긴 곡이 없습니다.<br>전체 탭에서 곡 옆 ⋯ 버튼 → 플레이리스트에 담기</p>'
+          : '<p class="empty">등록된 곡이 없습니다.<br>아래 버튼으로 첫 곡을 추가해 보세요.</p>';
+      } else if (shown.length === 0) {
+        html += '<p class="empty">검색 결과가 없습니다.</p>';
+      } else {
+        html += shown.map(g => card(g, q, !!list)).join('');
+      }
+      if (!list) html += `<button type="button" class="add-row global" data-act="add-song">${PLUS_ICON} 곡 추가 (새 가수)</button>`;
       listEl.innerHTML = html;
 
       for (const d of listEl.querySelectorAll('details')) {
         if (openSet.has(d.dataset.artist) || forceOpen === d.dataset.artist) d.open = true;
       }
       forceOpen = null;
-      totalEl.innerHTML = '<b>' + groups.length + '</b>명 · ' + songs.length + '곡';
+      totalEl.innerHTML = list
+        ? '<b>' + rows.length + '</b>곡'
+        : '<b>' + groups.length + '</b>명 · ' + songs.length + '곡';
     }
 
     // ---------- data ----------
@@ -465,6 +571,47 @@
       const { error } = await db.from(TABLE).delete().eq('id', id);
       if (error) throw error;
       songs = songs.filter(s => s.id !== id);
+      plSongs = plSongs.filter(r => r.song_id !== id); // DB 쪽은 on delete cascade
+    }
+
+    // ----- 플레이리스트 -----
+    async function loadPlaylists() {
+      const r1 = await db.from(T_LISTS).select('*').order('id', { ascending: true });
+      if (r1.error) throw r1.error;
+      const r2 = await db.from(T_LIST_SONGS).select('*');
+      if (r2.error) throw r2.error;
+      playlists = r1.data || [];
+      plSongs = r2.data || [];
+      plReady = true;
+    }
+    async function createPlaylist(name) {
+      const { data, error } = await db.from(T_LISTS).insert({ name }).select().single();
+      if (error) throw error;
+      playlists.push(data);
+      return data;
+    }
+    async function renamePlaylist(id, name) {
+      const { error } = await db.from(T_LISTS).update({ name }).eq('id', id);
+      if (error) throw error;
+      const p = playlists.find(x => x.id === id);
+      if (p) p.name = name;
+    }
+    async function deletePlaylist(id) {
+      const { error } = await db.from(T_LISTS).delete().eq('id', id);
+      if (error) throw error;
+      playlists = playlists.filter(x => x.id !== id);
+      plSongs = plSongs.filter(r => r.playlist_id !== id);
+    }
+    async function addToPlaylist(pid, sid) {
+      if (inList(pid, sid)) return;
+      const { error } = await db.from(T_LIST_SONGS).insert({ playlist_id: pid, song_id: sid });
+      if (error) throw error;
+      plSongs.push({ playlist_id: pid, song_id: sid });
+    }
+    async function removeFromPlaylist(pid, sid) {
+      const { error } = await db.from(T_LIST_SONGS).delete().eq('playlist_id', pid).eq('song_id', sid);
+      if (error) throw error;
+      plSongs = plSongs.filter(r => !(r.playlist_id === pid && r.song_id === sid));
     }
 
     // ---------- bottom sheet ----------
@@ -536,10 +683,56 @@
     function openMore(id) {
       const s = songById(id); if (!s) return;
       ctx = { id: s.id };
+      const list = currentList();
       openSheet(sheetHead(s.original_title, s.artist, true) + `
         <div class="menu">
-          <button type="button" class="danger" data-act="del-song">${TRASH_ICON}<span>곡 삭제</span></button>
+          ${plReady ? `<button type="button" data-act="pick-list">${PLUS_ICON}<span class="label">플레이리스트에 담기</span></button>` : ''}
+          ${list ? `<button type="button" data-act="remove-from-list"><span class="label">「${escapeHtml(list.name)}」에서 빼기</span></button>` : ''}
+          <button type="button" class="danger" data-act="del-song">${TRASH_ICON}<span class="label">곡 삭제</span></button>
         </div>`);
+    }
+
+    // ----- 플레이리스트에 담기 -----
+    function showPickList() {
+      const s = songById(ctx.id); if (!s) return;
+      const items = playlists.map(p => {
+        const on = inList(p.id, s.id);
+        return `<button type="button" class="${on ? 'on' : ''}" data-act="toggle-list" data-id="${p.id}">
+          <span class="label">${escapeHtml(p.name)}</span><span class="count">${listCount(p.id)}곡</span>${on ? CHECK_ICON : ''}
+        </button>`;
+      }).join('');
+      openSheet(sheetHead('플레이리스트에 담기', s.original_title, false) + `
+        <div class="menu">${items}</div>
+        ${playlists.length === 0 ? '<p class="hint">아직 플레이리스트가 없습니다. 아래에서 만들어 보세요.</p>' : ''}
+        <form class="inline-form" data-form="new-list-add">
+          <input class="txt" name="name" required autocomplete="off" placeholder="새 리스트 이름">
+          <button type="submit" class="btn primary">만들기</button>
+        </form>
+        <div class="sheet-btns"><button type="button" class="btn" data-act="close">완료</button></div>`);
+    }
+
+    function openNewList() {
+      openSheet(sheetHead('새 플레이리스트') + `
+        <form data-form="new-list">
+          <label class="field"><span>리스트 이름</span><input class="txt" name="name" required autocomplete="off"></label>
+          <div class="sheet-btns">
+            <button type="button" class="btn" data-act="close">취소</button>
+            <button type="submit" class="btn primary">만들기</button>
+          </div>
+        </form>`);
+      sheet.querySelector('input[name=name]').focus();
+    }
+    function openRenameList() {
+      const list = currentList(); if (!list) return;
+      openSheet(sheetHead('리스트 이름 변경') + `
+        <form data-form="rename-list">
+          <label class="field"><span>리스트 이름</span><input class="txt" name="name" required autocomplete="off" value="${escapeHtml(list.name)}"></label>
+          <div class="sheet-btns">
+            <button type="button" class="btn" data-act="close">취소</button>
+            <button type="submit" class="btn primary">저장</button>
+          </div>
+        </form>`);
+      sheet.querySelector('input[name=name]').focus();
     }
 
     // ---------- form handlers ----------
@@ -580,12 +773,80 @@
           sheetError('가사를 저장하지 못했습니다.', err);
         }
       },
+      async 'new-list'(fd) {
+        const name = nz(fd.get('name'));
+        if (!name) return;
+        setBusy(true);
+        try {
+          const p = await createPlaylist(name);
+          clearError();
+          view = p.id;
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('리스트를 만들지 못했습니다.', err);
+        }
+      },
+      async 'new-list-add'(fd) {
+        const name = nz(fd.get('name'));
+        if (!name) return;
+        setBusy(true);
+        try {
+          const p = await createPlaylist(name);
+          await addToPlaylist(p.id, ctx.id);
+          clearError();
+          render(); showPickList();
+        } catch (err) {
+          setBusy(false);
+          sheetError('리스트를 만들지 못했습니다.', err);
+        }
+      },
+      async 'rename-list'(fd) {
+        const list = currentList(); if (!list) return;
+        const name = nz(fd.get('name'));
+        if (!name) return;
+        setBusy(true);
+        try {
+          await renamePlaylist(list.id, name);
+          clearError();
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('이름을 바꾸지 못했습니다.', err);
+        }
+      },
     };
 
     const actions = {
       close: closeSheet,
       'lyrics-edit': showLyricsEdit,
       'lyrics-view': showLyricsView,
+      'pick-list': showPickList,
+      async 'toggle-list'(btn) {
+        const pid = Number(btn.dataset.id);
+        setBusy(true);
+        try {
+          if (inList(pid, ctx.id)) await removeFromPlaylist(pid, ctx.id);
+          else await addToPlaylist(pid, ctx.id);
+          clearError();
+          render(); showPickList();
+        } catch (err) {
+          setBusy(false);
+          sheetError('플레이리스트를 저장하지 못했습니다.', err);
+        }
+      },
+      async 'remove-from-list'() {
+        const list = currentList(); if (!list) return;
+        setBusy(true);
+        try {
+          await removeFromPlaylist(list.id, ctx.id);
+          clearError();
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('리스트에서 빼지 못했습니다.', err);
+        }
+      },
       async 'del-song'() {
         const s = songById(ctx.id); if (!s) return;
         if (!confirm(`「${s.original_title}」을(를) 삭제할까요?`)) return;
@@ -620,11 +881,40 @@
         case 'add-song': openAddSong(btn.dataset.artist || ''); break;
         case 'lyrics': openLyrics(li.dataset.id); break;
         case 'more': openMore(li.dataset.id); break;
+        case 'list-rename': openRenameList(); break;
+        case 'list-delete': {
+          const list = currentList(); if (!list) return;
+          if (!confirm(`「${list.name}」 리스트를 삭제할까요? (곡 자체는 지워지지 않습니다)`)) return;
+          deletePlaylist(list.id)
+            .then(() => { clearError(); view = 'all'; render(); })
+            .catch(err => showError('리스트를 삭제하지 못했습니다.', err));
+          break;
+        }
       }
     });
 
+    tabsEl.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      if (btn.dataset.act === 'new-list') { openNewList(); return; }
+      if (!btn.dataset.view) return;
+      const next = btn.dataset.view === 'all' ? 'all' : Number(btn.dataset.view);
+      if (next !== view) { view = next; render(); }
+    });
+
     searchEl.addEventListener('input', render);
-    loadSongs();
+
+    (async function init() {
+      await loadSongs();
+      if (songs.length === 0 && errorEl.classList.contains('show')) return; // 곡 목록 자체를 못 불러온 경우
+      try {
+        await loadPlaylists();
+      } catch (err) {
+        plReady = false;
+        showError('플레이리스트 테이블을 불러오지 못했습니다. schema.sql 을 Supabase SQL Editor 에서 실행하면 플레이리스트 기능이 켜집니다.', err);
+      }
+      render();
+    })();
   </script>
 </body>
 </html>
