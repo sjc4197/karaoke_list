@@ -20,8 +20,8 @@
       --text-3: #a09d96;
       --accent: #e8457a;
       --accent-soft: #fde6ee;
-      --done: #2fb47c;
-      --done-soft: #e1f5ec;
+      --danger: #d9453d;
+      --danger-soft: #fdeceb;
       --shadow: 0 1px 2px rgba(20, 18, 12, .05), 0 6px 20px rgba(20, 18, 12, .06);
       --radius: 18px;
     }
@@ -36,8 +36,8 @@
         --text-3: #6c7080;
         --accent: #ff5f90;
         --accent-soft: #3a1f2b;
-        --done: #45d492;
-        --done-soft: #16352a;
+        --danger: #ff6b63;
+        --danger-soft: #3d2222;
         --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
       }
     }
@@ -56,6 +56,7 @@
       -webkit-font-smoothing: antialiased;
     }
     .ja { font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Noto Sans KR", sans-serif; }
+    button { font: inherit; color: inherit; }
 
     /* ---------- header ---------- */
     header {
@@ -71,24 +72,9 @@
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 12px; margin-bottom: 10px;
     }
-    h1 {
-      margin: 0;
-      font-size: 22px; font-weight: 700; letter-spacing: -.01em;
-    }
-    .total {
-      font-size: 13px; font-weight: 500; color: var(--text-2);
-      white-space: nowrap;
-    }
-    .total b { color: var(--done); font-weight: 700; }
-    .total-bar {
-      height: 4px; border-radius: 99px; background: var(--line);
-      overflow: hidden; margin-bottom: 12px;
-    }
-    .total-bar > i {
-      display: block; height: 100%; width: 0;
-      background: var(--done); border-radius: 99px;
-      transition: width .35s ease;
-    }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+    .total { font-size: 13px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+    .total b { color: var(--accent); font-weight: 700; }
     .search { position: relative; }
     .search svg {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -108,10 +94,20 @@
       -webkit-appearance: none;
     }
     #search::placeholder { color: var(--text-3); }
-    #search:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+    #search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    /* ---------- error banner ---------- */
+    .error {
+      display: none;
+      max-width: 640px; margin: 12px auto 0;
+      padding: 10px 14px; border-radius: 12px;
+      background: var(--danger-soft); color: var(--danger);
+      border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+      font-size: 14px; font-weight: 500; line-height: 1.5;
+      overflow-wrap: anywhere;
     }
+    .error.show { display: block; }
+    .error-wrap { padding: 0 16px; }
 
     /* ---------- list ---------- */
     main {
@@ -145,10 +141,7 @@
       letter-spacing: -.01em;
       overflow-wrap: anywhere;
     }
-    .name-sub {
-      grid-column: 1; grid-row: 2;
-      font-size: 13px; color: var(--text-2); margin-top: 2px;
-    }
+    .name-sub { grid-column: 1; grid-row: 2; font-size: 13px; color: var(--text-2); margin-top: 2px; }
     .pill {
       grid-column: 2; grid-row: 1 / span 2;
       font-size: 13px; font-weight: 700;
@@ -157,57 +150,34 @@
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
-    .pill.all { background: var(--done-soft); color: var(--done); }
     .chev {
       grid-column: 3; grid-row: 1 / span 2;
       width: 20px; height: 20px; color: var(--text-3);
       transition: transform .2s ease;
     }
     details[open] .chev { transform: rotate(180deg); }
-    .bar { height: 3px; background: var(--line); }
-    .bar > i {
-      display: block; height: 100%; width: 0;
-      background: var(--done);
-      transition: width .3s ease;
-    }
+    details[open] summary { border-bottom: 1px solid var(--line); }
 
-    .artist ul { list-style: none; margin: 0; padding: 4px 8px 8px; }
+    .artist ul { list-style: none; margin: 0; padding: 4px 8px 4px; }
     .song {
-      position: relative;
-      display: flex; align-items: center; gap: 14px;
+      display: flex; align-items: center; gap: 8px;
       min-height: 52px;
-      padding: 8px 10px;
+      padding: 6px 4px 6px 12px;
       border-radius: 12px;
-      cursor: pointer;
-      transition: background .12s;
     }
-    .song:active { background: var(--surface-2); }
-    .song input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
-    .box {
-      flex: none;
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      border: 2px solid var(--text-3);
-      display: grid; place-items: center;
-      transition: background .15s, border-color .15s;
-    }
-    .box svg {
-      width: 14px; height: 14px; color: #fff;
-      opacity: 0; transform: scale(.6); transition: .15s;
-    }
-    .song-title {
+    .song-text {
       flex: 1 1 auto; min-width: 0;
-      font-size: 17px; font-weight: 500;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-      transition: color .15s;
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 3px 10px;
     }
+    .song-title { font-size: 17px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+    .song-title small { display: block; font-size: 12px; font-weight: 400; color: var(--text-2); }
     .dam {
       flex: none;
       font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
-      font-size: 14px; font-weight: 600; letter-spacing: .02em;
+      font-size: 13px; font-weight: 600; letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
-      padding: 3px 8px; border-radius: 8px;
+      padding: 2px 7px; border-radius: 7px;
       background: var(--accent-soft); color: var(--accent);
       white-space: nowrap;
     }
@@ -215,21 +185,104 @@
       background: var(--surface-2); color: var(--text-3);
       font-family: inherit; font-weight: 500; font-size: 12px;
     }
-    .song.done .box { background: var(--done); border-color: var(--done); }
-    .song.done .box svg { opacity: 1; transform: scale(1); }
-    .song.done .song-title {
-      color: var(--text-3);
-      text-decoration: line-through; text-decoration-thickness: 1.5px;
-    }
-    .song.done .dam { opacity: .55; }
 
-    mark {
-      background: var(--accent-soft); color: var(--accent);
-      border-radius: 4px; padding: 0 2px;
+    .song-actions { flex: none; display: flex; align-items: center; gap: 4px; }
+    .ibtn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      height: 34px; min-width: 34px;
+      border: 1px solid var(--line); border-radius: 10px;
+      background: var(--surface);
+      color: var(--text-2); cursor: pointer;
+      padding: 0 9px;
+      font-size: 13px; font-weight: 600;
     }
-    .empty {
-      color: var(--text-3); text-align: center; padding: 64px 0; font-size: 15px;
+    .ibtn:active { background: var(--surface-2); }
+    .ibtn svg { width: 16px; height: 16px; }
+    .ibtn.more { padding: 0; width: 34px; color: var(--text-3); }
+    .ibtn.lyr.has { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+
+    .card-foot { padding: 0 8px 8px; }
+    .add-row {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px;
+      border: 1px dashed var(--line); border-radius: 12px;
+      background: transparent;
+      color: var(--text-3); font-size: 14px; font-weight: 600;
+      cursor: pointer;
     }
+    .add-row:active { background: var(--surface-2); }
+    .add-row svg { width: 16px; height: 16px; }
+    .add-row.global {
+      min-height: 56px; font-size: 15px;
+      border-color: var(--text-3); color: var(--text-2);
+      border-radius: var(--radius);
+      margin-top: 4px;
+    }
+
+    mark { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 0 2px; }
+    .empty { color: var(--text-3); text-align: center; padding: 48px 12px; font-size: 15px; line-height: 1.7; }
+
+    /* ---------- bottom sheet ---------- */
+    dialog.sheet {
+      border: 0; padding: 0;
+      inset: auto 0 0 0; margin: 0 auto;
+      width: 100%; max-width: 640px; max-height: 92dvh;
+      background: var(--surface); color: var(--text);
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -8px 40px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    dialog.sheet::backdrop { background: rgba(0, 0, 0, .45); }
+    .sheet-in {
+      max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+    }
+    .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 14px; }
+    .sheet-title { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+    .sheet-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+    .sheet-head { margin-bottom: 16px; }
+    .sheet-err { display: none; margin: 0 0 12px; font-size: 13px; color: var(--danger); overflow-wrap: anywhere; }
+    .sheet-err.show { display: block; }
+
+    .field { display: block; margin-bottom: 14px; }
+    .field > span { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .txt {
+      width: 100%; font: inherit; font-size: 16px;
+      padding: 11px 13px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: var(--surface-2); color: var(--text);
+      outline: none; -webkit-appearance: none;
+    }
+    .txt:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+    .txt::placeholder { color: var(--text-3); }
+    .txt:disabled { opacity: .6; }
+    textarea.txt { min-height: 220px; resize: vertical; line-height: 1.6; }
+    .sheet-btns { display: flex; gap: 10px; margin-top: 18px; }
+    .btn {
+      flex: 1; min-height: 46px;
+      border: 1px solid var(--line); border-radius: 13px;
+      background: var(--surface-2); color: var(--text);
+      font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn:disabled { opacity: .55; cursor: default; }
+
+    .menu { display: flex; flex-direction: column; gap: 6px; }
+    .menu button {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; min-height: 50px; padding: 0 14px;
+      border: 1px solid var(--line); border-radius: 13px;
+      background: var(--surface-2); color: var(--text);
+      font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;
+    }
+    .menu button.danger { color: var(--danger); }
+    .menu button svg { width: 18px; height: 18px; flex: none; }
+    .menu button:disabled { opacity: .55; }
+
+    .lyrics { white-space: pre-wrap; line-height: 1.75; font-size: 16px; margin-top: 4px; }
+    .lyrics.empty-ly { color: var(--text-3); text-align: center; padding: 24px 0; }
   </style>
 </head>
 <body>
@@ -239,43 +292,64 @@
         <h1>노래방 리스트</h1>
         <div class="total" id="total"></div>
       </div>
-      <div class="total-bar"><i id="total-bar"></i></div>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="search" type="search" placeholder="가수 / 곡명 검색" autocomplete="off" enterkeyhint="search">
       </div>
     </div>
   </header>
-  <main id="list"></main>
+  <div class="error-wrap"><div class="error" id="error" role="alert"></div></div>
+  <main id="list"><p class="empty">불러오는 중…</p></main>
+  <dialog class="sheet" id="sheet"></dialog>
 
-  <script src="songs.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL = 'https://sadeuuhrnlazabipyvob.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_MbQ4ecEbz-nl8STJa6WKVg_LTJSekPH';
+    const TABLE = 'songs';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const listEl = document.getElementById('list');
     const searchEl = document.getElementById('search');
     const totalEl = document.getElementById('total');
-    const totalBarEl = document.getElementById('total-bar');
-    const STORAGE_KEY = 'karaoke-sung';
+    const errorEl = document.getElementById('error');
+    const sheet = document.getElementById('sheet');
 
     const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-    const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+    const LYRIC_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>';
+    const MORE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+    const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
 
-    function loadSung() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-      catch (e) { return {}; }
-    }
-    function saveSung(sung) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sung)); } catch (e) {}
-    }
-    let sung = loadSung();
-    const keyOf = (artist, title) => artist + '\u0000' + title;
+    let songs = [];      // songs 테이블 행 목록
+    let ctx = {};        // 시트에서 다루는 현재 곡
+    let forceOpen = null;
 
+    // ---------- errors ----------
+    function showError(message, err) {
+      console.error(message, err);
+      const detail = err && (err.message || err.details || err.hint);
+      errorEl.textContent = message + (detail ? ' (' + detail + ')' : '');
+      errorEl.classList.add('show');
+    }
+    function clearError() { errorEl.classList.remove('show'); errorEl.textContent = ''; }
+    function sheetError(message, err) {
+      console.error(message, err);
+      const el = sheet.querySelector('.sheet-err');
+      if (!el) return;
+      const detail = err && (err.message || err.details || err.hint);
+      el.textContent = message + (detail ? ' (' + detail + ')' : '');
+      el.classList.add('show');
+    }
+
+    // ---------- helpers ----------
     function escapeHtml(s) {
-      return s.replace(/[&<>"']/g, c => ({
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[c]));
     }
-
     function highlight(text, q) {
+      text = text == null ? '' : String(text);
       if (!q) return escapeHtml(text);
       const idx = text.toLowerCase().indexOf(q);
       if (idx < 0) return escapeHtml(text);
@@ -283,107 +357,274 @@
         '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>' +
         escapeHtml(text.slice(idx + q.length));
     }
+    const nz = v => (v == null ? '' : String(v)).trim();
 
-    // "米津玄師 (요네즈 켄시)" -> { main: "米津玄師", sub: "요네즈 켄시" }
-    function splitName(artist) {
-      const m = artist.match(/^(.*?)\s*\((.*)\)\s*$/);
-      return m ? { main: m[1], sub: m[2] } : { main: artist, sub: '' };
-    }
-
-    function progress(artist) {
-      const entry = SONGS.find(e => e.artist === artist);
-      const done = entry.songs.filter(s => sung[keyOf(artist, s.title)]).length;
-      return { done, total: entry.songs.length };
-    }
-
-    function updateTotal() {
-      let done = 0, total = 0;
-      for (const e of SONGS) {
-        total += e.songs.length;
-        done += e.songs.filter(s => sung[keyOf(e.artist, s.title)]).length;
+    // artist 별로 묶기 (id 순서 유지)
+    function groupByArtist(rows) {
+      const groups = [];
+      for (const s of rows) {
+        let g = groups.find(x => x.artist === s.artist);
+        if (!g) { g = { artist: s.artist, artist_korean: nz(s.artist_korean), songs: [] }; groups.push(g); }
+        if (!g.artist_korean && nz(s.artist_korean)) g.artist_korean = nz(s.artist_korean);
+        g.songs.push(s);
       }
-      totalEl.innerHTML = '<b>' + done + '</b> / ' + total + '곡';
-      totalBarEl.style.width = total ? (done / total * 100) + '%' : '0%';
+      return groups;
     }
 
-    function updateCard(details) {
-      const { done, total } = progress(details.dataset.artist);
-      const pill = details.querySelector('.pill');
-      pill.textContent = done + ' / ' + total;
-      pill.classList.toggle('all', done === total && total > 0);
-      details.querySelector('.bar > i').style.width = (done / total * 100) + '%';
+    function songMatches(s, q) {
+      return nz(s.original_title).toLowerCase().includes(q) ||
+        nz(s.title_korean).toLowerCase().includes(q) ||
+        nz(s.dam).includes(q);
+    }
+
+    // ---------- render ----------
+    function songRow(s, q) {
+      const dam = nz(s.dam)
+        ? `<span class="dam">${highlight(s.dam, q)}</span>`
+        : '<span class="dam none">DAM 없음</span>';
+      const ko = nz(s.title_korean) ? `<small>${highlight(s.title_korean, q)}</small>` : '';
+      return `<li class="song" data-id="${s.id}">
+        <div class="song-text">
+          <span class="song-title ja">${highlight(s.original_title, q)}${ko}</span>${dam}
+        </div>
+        <div class="song-actions">
+          <button type="button" class="ibtn lyr ${nz(s.lyrics) ? 'has' : ''}" data-act="lyrics">${LYRIC_ICON}<span>가사</span></button>
+          <button type="button" class="ibtn more" data-act="more" aria-label="메뉴">${MORE_ICON}</button>
+        </div>
+      </li>`;
+    }
+
+    function card(g, q) {
+      return `
+      <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
+        <summary>
+          <div class="name ja">${highlight(g.artist, q)}</div>
+          ${g.artist_korean ? `<div class="name-sub">${highlight(g.artist_korean, q)}</div>` : ''}
+          <span class="pill">${g.songs.length}곡</span>
+          ${CHEVRON}
+        </summary>
+        <ul>${g.songs.map(s => songRow(s, q)).join('')}</ul>
+        <div class="card-foot">
+          <button type="button" class="add-row" data-act="add-song" data-artist="${escapeHtml(g.artist)}">${PLUS_ICON} 곡 추가</button>
+        </div>
+      </details>`;
     }
 
     function render() {
       const q = searchEl.value.trim().toLowerCase();
-      const groups = [];
+      const openSet = new Set([...listEl.querySelectorAll('details[open]')].map(d => d.dataset.artist));
+      const groups = groupByArtist(songs);
 
-      for (const entry of SONGS) {
-        const artistHit = entry.artist.toLowerCase().includes(q);
-        const songs = q && !artistHit
-          ? entry.songs.filter(s => s.title.toLowerCase().includes(q) || (s.dam || '').includes(q))
-          : entry.songs;
-        if (songs.length === 0 && !(artistHit && q)) continue;
-        groups.push({ artist: entry.artist, songs });
+      const shown = [];
+      for (const g of groups) {
+        const artistHit = g.artist.toLowerCase().includes(q) || g.artist_korean.toLowerCase().includes(q);
+        const rows = q && !artistHit ? g.songs.filter(s => songMatches(s, q)) : g.songs;
+        if (q && rows.length === 0 && !artistHit) continue;
+        shown.push({ ...g, songs: rows });
       }
 
-      if (SONGS.length === 0) {
-        listEl.innerHTML = '<p class="empty">songs.js 에 가수와 곡을 추가하세요.</p>';
-        return;
-      }
-      if (groups.length === 0) {
-        listEl.innerHTML = '<p class="empty">검색 결과가 없습니다.</p>';
-        return;
-      }
+      let html = '';
+      if (songs.length === 0) html += '<p class="empty">등록된 곡이 없습니다.<br>아래 버튼으로 첫 곡을 추가해 보세요.</p>';
+      else if (shown.length === 0) html += '<p class="empty">검색 결과가 없습니다.</p>';
+      else html += shown.map(g => card(g, q)).join('');
+      html += `<button type="button" class="add-row global" data-act="add-song">${PLUS_ICON} 곡 추가 (새 가수)</button>`;
+      listEl.innerHTML = html;
 
-      listEl.innerHTML = groups.map(g => {
-        const { main, sub } = splitName(g.artist);
-        const { done, total } = progress(g.artist);
-        const pct = done / total * 100;
-        return `
-        <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
-          <summary>
-            <div class="name ja">${highlight(main, q)}</div>
-            ${sub ? `<div class="name-sub">${highlight(sub, q)}</div>` : ''}
-            <span class="pill ${done === total ? 'all' : ''}">${done} / ${total}</span>
-            ${CHEVRON}
-          </summary>
-          <div class="bar"><i style="width:${pct}%"></i></div>
-          <ul>
-            ${g.songs.map(s => {
-              const isDone = !!sung[keyOf(g.artist, s.title)];
-              const dam = s.dam
-                ? `<span class="dam">${highlight(s.dam, q)}</span>`
-                : '<span class="dam none">DAM 없음</span>';
-              return `<li>
-                <label class="song ${isDone ? 'done' : ''}">
-                  <input type="checkbox" data-artist="${escapeHtml(g.artist)}"
-                         data-title="${escapeHtml(s.title)}" ${isDone ? 'checked' : ''}>
-                  <span class="box">${CHECK}</span>
-                  <span class="song-title ja">${highlight(s.title, q)}</span>
-                  ${dam}
-                </label>
-              </li>`;
-            }).join('')}
-          </ul>
-        </details>`;
-      }).join('');
+      for (const d of listEl.querySelectorAll('details')) {
+        if (openSet.has(d.dataset.artist) || forceOpen === d.dataset.artist) d.open = true;
+      }
+      forceOpen = null;
+      totalEl.innerHTML = '<b>' + groups.length + '</b>명 · ' + songs.length + '곡';
     }
 
-    listEl.addEventListener('change', e => {
-      const cb = e.target;
-      if (cb.type !== 'checkbox') return;
-      const key = keyOf(cb.dataset.artist, cb.dataset.title);
-      if (cb.checked) sung[key] = true; else delete sung[key];
-      saveSung(sung);
-      cb.closest('.song').classList.toggle('done', cb.checked);
-      updateCard(cb.closest('details'));
-      updateTotal();
+    // ---------- data ----------
+    async function loadSongs() {
+      const { data, error } = await db.from(TABLE).select('*').order('id', { ascending: true });
+      if (error) {
+        showError('곡 목록을 불러오지 못했습니다.', error);
+        listEl.innerHTML = '<p class="empty">목록을 불러오지 못했습니다.<br>새로고침 해 보세요.</p>';
+        return;
+      }
+      clearError();
+      songs = data || [];
+      render();
+    }
+
+    async function insertSong(row) {
+      const { data, error } = await db.from(TABLE).insert(row).select().single();
+      if (error) throw error;
+      songs.push(data);
+    }
+    async function updateLyrics(id, lyrics) {
+      const { data, error } = await db.from(TABLE).update({ lyrics }).eq('id', id).select().single();
+      if (error) throw error;
+      const i = songs.findIndex(s => s.id === id);
+      if (i >= 0) songs[i] = data;
+    }
+    async function deleteSong(id) {
+      const { error } = await db.from(TABLE).delete().eq('id', id);
+      if (error) throw error;
+      songs = songs.filter(s => s.id !== id);
+    }
+
+    // ---------- bottom sheet ----------
+    function openSheet(html) {
+      sheet.innerHTML = '<div class="sheet-in"><div class="grab"></div>' + html + '</div>';
+      if (!sheet.open) sheet.showModal();
+      sheet.querySelector('.sheet-in').scrollTop = 0;
+    }
+    function closeSheet() { if (sheet.open) sheet.close(); }
+    function sheetHead(title, sub, ja) {
+      return `<div class="sheet-head"><h2 class="sheet-title ${ja ? 'ja' : ''}">${escapeHtml(title)}</h2>${sub ? `<div class="sheet-sub">${escapeHtml(sub)}</div>` : ''}</div><p class="sheet-err"></p>`;
+    }
+    function setBusy(busy) {
+      for (const el of sheet.querySelectorAll('button, input, textarea')) el.disabled = busy;
+    }
+    const songById = id => songs.find(s => s.id === Number(id));
+
+    // ----- 곡 추가 -----
+    function openAddSong(artist) {
+      const g = artist ? groupByArtist(songs).find(x => x.artist === artist) : null;
+      const fixed = !!g;
+      openSheet(sheetHead('곡 추가', fixed ? artist : '') + `
+        <form data-form="add-song">
+          <div class="row2">
+            <label class="field"><span>가수 (일본어)</span><input class="txt ja" name="artist" required autocomplete="off" value="${escapeHtml(fixed ? g.artist : '')}" ${fixed ? 'readonly' : ''} placeholder="米津玄師"></label>
+            <label class="field"><span>가수 (한국어)</span><input class="txt" name="artist_korean" autocomplete="off" value="${escapeHtml(fixed ? g.artist_korean : '')}" ${fixed ? 'readonly' : ''} placeholder="요네즈 켄시"></label>
+          </div>
+          <label class="field"><span>곡명 (일본어)</span><input class="txt ja" name="original_title" required autocomplete="off"></label>
+          <label class="field"><span>곡명 (한국어, 선택)</span><input class="txt" name="title_korean" autocomplete="off"></label>
+          <label class="field"><span>DAM 번호 (선택)</span><input class="txt" name="dam" autocomplete="off" inputmode="numeric" placeholder="0000-00"></label>
+          <div class="sheet-btns">
+            <button type="button" class="btn" data-act="close">취소</button>
+            <button type="submit" class="btn primary">추가</button>
+          </div>
+        </form>`);
+      const first = sheet.querySelector(fixed ? 'input[name=original_title]' : 'input[name=artist]');
+      if (first) first.focus();
+    }
+
+    // ----- 가사 -----
+    function openLyrics(id) {
+      const s = songById(id); if (!s) return;
+      ctx = { id: s.id };
+      if (nz(s.lyrics)) showLyricsView(); else showLyricsEdit();
+    }
+    function showLyricsView() {
+      const s = songById(ctx.id); if (!s) return;
+      openSheet(sheetHead(s.original_title, s.artist, true) +
+        `<div class="lyrics ja">${escapeHtml(s.lyrics)}</div>
+        <div class="sheet-btns">
+          <button type="button" class="btn" data-act="close">닫기</button>
+          <button type="button" class="btn primary" data-act="lyrics-edit">편집</button>
+        </div>`);
+    }
+    function showLyricsEdit() {
+      const s = songById(ctx.id); if (!s) return;
+      const has = nz(s.lyrics) !== '';
+      openSheet(sheetHead(s.original_title, s.artist + ' · 가사 편집', true) + `
+        <form data-form="lyrics">
+          <label class="field"><span>가사</span><textarea class="txt ja" name="lyrics" placeholder="일본어 가사와 한국어 발음을 붙여넣기">${escapeHtml(s.lyrics)}</textarea></label>
+          <div class="sheet-btns">
+            <button type="button" class="btn" data-act="${has ? 'lyrics-view' : 'close'}">취소</button>
+            <button type="submit" class="btn primary">저장</button>
+          </div>
+        </form>`);
+    }
+
+    // ----- 곡 메뉴 (⋯) -----
+    function openMore(id) {
+      const s = songById(id); if (!s) return;
+      ctx = { id: s.id };
+      openSheet(sheetHead(s.original_title, s.artist, true) + `
+        <div class="menu">
+          <button type="button" class="danger" data-act="del-song">${TRASH_ICON}<span>곡 삭제</span></button>
+        </div>`);
+    }
+
+    // ---------- form handlers ----------
+    const forms = {
+      async 'add-song'(fd, form) {
+        const row = {
+          artist: nz(fd.get('artist')),
+          artist_korean: nz(fd.get('artist_korean')) || null,
+          original_title: nz(fd.get('original_title')),
+          title_korean: nz(fd.get('title_korean')) || null,
+          dam: nz(fd.get('dam')) || null,
+          lyrics: null,
+        };
+        if (!row.artist || !row.original_title) return;
+        if (songs.some(s => s.artist === row.artist && nz(s.original_title).toLowerCase() === row.original_title.toLowerCase())) {
+          sheetError('이미 등록된 곡입니다.'); return;
+        }
+        setBusy(true);
+        try {
+          await insertSong(row);
+          clearError();
+          forceOpen = row.artist;
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('곡을 추가하지 못했습니다.', err);
+        }
+      },
+      async 'lyrics'(fd) {
+        const lyrics = (fd.get('lyrics') || '').replace(/\r/g, '').trim() || null;
+        setBusy(true);
+        try {
+          await updateLyrics(ctx.id, lyrics);
+          clearError();
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('가사를 저장하지 못했습니다.', err);
+        }
+      },
+    };
+
+    const actions = {
+      close: closeSheet,
+      'lyrics-edit': showLyricsEdit,
+      'lyrics-view': showLyricsView,
+      async 'del-song'() {
+        const s = songById(ctx.id); if (!s) return;
+        if (!confirm(`「${s.original_title}」을(를) 삭제할까요?`)) return;
+        setBusy(true);
+        try {
+          await deleteSong(s.id);
+          clearError();
+          closeSheet(); render();
+        } catch (err) {
+          setBusy(false);
+          sheetError('곡을 삭제하지 못했습니다.', err);
+        }
+      },
+    };
+
+    sheet.addEventListener('click', e => {
+      if (e.target === sheet) { closeSheet(); return; }
+      const btn = e.target.closest('[data-act]');
+      if (btn && actions[btn.dataset.act]) actions[btn.dataset.act](btn);
+    });
+    sheet.addEventListener('submit', e => {
+      e.preventDefault();
+      const h = forms[e.target.dataset.form];
+      if (h) h(new FormData(e.target), e.target);
+    });
+
+    listEl.addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const li = btn.closest('li.song');
+      switch (btn.dataset.act) {
+        case 'add-song': openAddSong(btn.dataset.artist || ''); break;
+        case 'lyrics': openLyrics(li.dataset.id); break;
+        case 'more': openMore(li.dataset.id); break;
+      }
     });
 
     searchEl.addEventListener('input', render);
-    render();
-    updateTotal();
+    loadSongs();
   </script>
 </body>
 </html>
