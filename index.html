@@ -247,9 +247,10 @@
     .ibtn.more { padding: 0; width: 34px; color: var(--text-3); }
     .ibtn.lyr.has { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
 
-    .card-foot { padding: 0 8px 8px; }
+    .card-foot { display: flex; align-items: center; gap: 8px; padding: 0 8px 8px; }
+    .card-foot .text-btn { background: transparent; border-color: transparent; min-height: 44px; }
     .add-row {
-      width: 100%;
+      flex: 1; width: 100%;
       display: flex; align-items: center; justify-content: center; gap: 6px;
       min-height: 44px;
       border: 1px dashed var(--line); border-radius: 12px;
@@ -465,6 +466,7 @@
       const foot = isList ? '' : `
         <div class="card-foot">
           <button type="button" class="add-row" data-act="add-song" data-artist="${escapeHtml(g.artist)}">${PLUS_ICON} 곡 추가</button>
+          <button type="button" class="text-btn danger" data-act="del-artist" data-artist="${escapeHtml(g.artist)}">가수 삭제</button>
         </div>`;
       return `
       <details class="artist" data-artist="${escapeHtml(g.artist)}" ${q ? 'open' : ''}>
@@ -572,6 +574,14 @@
       if (error) throw error;
       songs = songs.filter(s => s.id !== id);
       plSongs = plSongs.filter(r => r.song_id !== id); // DB 쪽은 on delete cascade
+    }
+    // 가수 삭제 = 그 가수의 곡 전부 삭제 (가수는 곡의 artist 값으로만 존재)
+    async function deleteArtist(artist) {
+      const { error } = await db.from(TABLE).delete().eq('artist', artist);
+      if (error) throw error;
+      const ids = new Set(songs.filter(s => s.artist === artist).map(s => s.id));
+      songs = songs.filter(s => !ids.has(s.id));
+      plSongs = plSongs.filter(r => !ids.has(r.song_id));
     }
 
     // ----- 플레이리스트 -----
@@ -879,6 +889,15 @@
       const li = btn.closest('li.song');
       switch (btn.dataset.act) {
         case 'add-song': openAddSong(btn.dataset.artist || ''); break;
+        case 'del-artist': {
+          const artist = btn.dataset.artist;
+          const n = songs.filter(s => s.artist === artist).length;
+          if (!confirm(`「${artist}」 안에 노래가 ${n}곡 들어있습니다.\n전체 다 삭제하겠습니까?`)) return;
+          deleteArtist(artist)
+            .then(() => { clearError(); render(); })
+            .catch(err => showError('가수를 삭제하지 못했습니다.', err));
+          break;
+        }
         case 'lyrics': openLyrics(li.dataset.id); break;
         case 'more': openMore(li.dataset.id); break;
         case 'list-rename': openRenameList(); break;
