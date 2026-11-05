@@ -216,7 +216,8 @@
       animation: strike .28s cubic-bezier(.65, 0, .2, 1) both;
     }
     @keyframes strike { from { right: 100%; } to { right: 0; } }
-    .song.done .dam { color: #5a5a5a; }
+    .song.done .num { color: #5a5a5a; }
+    .song.done .num i { color: #4a4a4a; }
     .pill.all { color: var(--accent); }
     .song-text {
       flex: 1 1 auto; min-width: 0;
@@ -225,16 +226,26 @@
     }
     .song-title { font-size: 18px; font-weight: 500; line-height: 1.25; overflow-wrap: anywhere; }
     .song-title small { display: block; font-size: 12px; font-weight: 400; color: var(--text-2); margin-top: 2px; }
-    .dam {
+    .nums {
       flex: none;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+      margin-left: auto; padding-right: 8px;
+    }
+    .num {
       font-family: var(--mono);
-      font-size: 14px; font-weight: 500;
+      font-size: 13px; font-weight: 500; line-height: 1.2;
       font-variant-numeric: tabular-nums;
       color: var(--text-2);
       white-space: nowrap;
-      margin-left: auto; padding-right: 8px;
     }
-    .dam.none { font-family: inherit; font-size: 12px; color: var(--text-3); }
+    .num i {
+      font-style: normal;
+      display: inline-block; min-width: 30px; margin-right: 6px;
+      font-size: 9px; font-weight: 700; letter-spacing: .08em;
+      color: var(--text-3);
+    }
+    .num.joy i { color: var(--accent); opacity: .8; }
+    .num.none { font-family: inherit; font-size: 12px; color: var(--text-3); }
 
     .song-actions { flex: none; display: flex; align-items: center; gap: 4px; }
     .ibtn {
@@ -522,14 +533,20 @@
     function songMatches(s, q) {
       return nz(s.original_title).toLowerCase().includes(q) ||
         nz(s.title_korean).toLowerCase().includes(q) ||
-        nz(s.dam).includes(q);
+        nz(s.dam).includes(q) ||
+        nz(s.joysound).includes(q);
     }
 
     // ---------- render ----------
+    function numBlock(s, q) {
+      const parts = [];
+      if (nz(s.dam)) parts.push(`<span class="num dam"><i>DAM</i>${highlight(s.dam, q)}</span>`);
+      if (nz(s.joysound)) parts.push(`<span class="num joy"><i>JOY</i>${highlight(s.joysound, q)}</span>`);
+      if (!parts.length) parts.push('<span class="num none">번호 없음</span>');
+      return `<span class="nums">${parts.join('')}</span>`;
+    }
     function songRow(s, q) {
-      const dam = nz(s.dam)
-        ? `<span class="dam">${highlight(s.dam, q)}</span>`
-        : '<span class="dam none">DAM 없음</span>';
+      const dam = numBlock(s, q);
       const ko = nz(s.title_korean) ? `<small>${highlight(s.title_korean, q)}</small>` : '';
       const done = isSung(s.id);
       return `<li class="song ${done ? 'done' : ''}" data-id="${s.id}">
@@ -771,7 +788,10 @@
           </div>
           <label class="field"><span>곡명 (일본어)</span><input class="txt ja" name="original_title" required autocomplete="off"></label>
           <label class="field"><span>곡명 (한국어, 선택)</span><input class="txt" name="title_korean" autocomplete="off"></label>
-          <label class="field"><span>DAM 번호 (선택)</span><input class="txt" name="dam" autocomplete="off" inputmode="numeric" placeholder="0000-00"></label>
+          <div class="row2">
+            <label class="field"><span>DAM 번호 (선택)</span><input class="txt" name="dam" autocomplete="off" inputmode="numeric" placeholder="0000-00"></label>
+            <label class="field"><span>JOYSOUND 번호 (선택)</span><input class="txt" name="joysound" autocomplete="off" inputmode="numeric" placeholder="000000"></label>
+          </div>
           <div class="sheet-btns">
             <button type="button" class="btn" data-act="close">취소</button>
             <button type="submit" class="btn primary">추가</button>
@@ -862,7 +882,7 @@
           <label class="pick-row">
             <input type="checkbox" name="song" value="${s.id}" ${inList(list.id, s.id) ? 'checked' : ''}>
             <span class="pbox">${CHECK_ICON}</span>
-            <span class="song-text"><span class="song-title ja">${escapeHtml(s.original_title)}</span>${nz(s.dam) ? `<span class="dam">${escapeHtml(s.dam)}</span>` : ''}</span>
+            <span class="song-text"><span class="song-title ja">${escapeHtml(s.original_title)}</span>${numBlock(s, '')}</span>
           </label>`).join('')}`).join('');
       openSheet(sheetHead(`「${list.name}」에 담기`, `${listCount(list.id)}곡 선택`) + `
         <form data-form="bulk-pick">
@@ -903,6 +923,7 @@
           dam: nz(fd.get('dam')) || null,
           lyrics: null,
         };
+        if (nz(fd.get('joysound'))) row.joysound = nz(fd.get('joysound'));
         if (!row.artist || !row.original_title) return;
         if (songs.some(s => s.artist === row.artist && nz(s.original_title).toLowerCase() === row.original_title.toLowerCase())) {
           sheetError('이미 등록된 곡입니다.'); return;
